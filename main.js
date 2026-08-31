@@ -9,7 +9,7 @@ import {
   hasAnyLegalMove, name, notation, hashBoard, repetitionVerdict, kingPos,
   blindInitialBoard, blindLegalMoves, blindApplyMove, blindInCheck,
   snapshotPiece,
-} from './game.js?v=59148e32a3';
+} from './game.js?v=2e197458e5';
 
 // ---------------- 常數 ----------------
 const CELL = 1;
@@ -480,7 +480,7 @@ let aiMoveStart = 0;
 let aiWorker = null;
 let aiModule = null;   // Worker 不可用時的主執行緒後備
 try {
-  aiWorker = new Worker(new URL('./ai-worker.js?v=59148e32a3', import.meta.url), { type: 'module' });
+  aiWorker = new Worker(new URL('./ai-worker.js?v=2e197458e5', import.meta.url), { type: 'module' });
   aiWorker.onmessage = (e) => onAIResult(e.data);
   aiWorker.onerror = () => {
     aiWorker = null;
@@ -512,7 +512,7 @@ function requestAIMove() {
   if (aiWorker) {
     aiWorker.postMessage(payload);
   } else {
-    (aiModule ??= import('./ai.js?v=59148e32a3')).then(({ findBestMove }) => {
+    (aiModule ??= import('./ai.js?v=2e197458e5')).then(({ findBestMove }) => {
       setTimeout(() => {
         if (token !== aiToken) return;
         onAIResult({ token, result: findBestMove(payload.board, payload.side, payload.level, payload.recent, payload.blind) });
