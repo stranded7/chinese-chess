@@ -9,7 +9,7 @@ import {
   hasAnyLegalMove, name, notation, hashBoard, repetitionVerdict, kingPos,
   blindInitialBoard, blindLegalMoves, blindApplyMove, blindInCheck,
   snapshotPiece,
-} from './game.js?v=2e197458e5';
+} from './game.js?v=97c18d55a5';
 
 // ---------------- 常數 ----------------
 const CELL = 1;
@@ -66,6 +66,35 @@ controls.minPolarAngle = 0.25;
 controls.maxPolarAngle = 1.38;
 controls.enablePan = false;
 controls.update();
+
+// ---------------- 手機／窄螢幕：依解析度自動拉遠鏡頭，讓整盤都能看見 ----------------
+let fitDist = HOME_DIST;
+let cameraUserAdjusted = false;
+controls.addEventListener('start', () => {
+  // 使用者開始拖曳／縮放後，不再每次 resize 都強制拉遠
+  cameraUserAdjusted = true;
+});
+
+function fitDistanceForAspect(aspect) {
+  const vFov = THREE.MathUtils.degToRad(camera.fov);
+  const hFov = 2 * Math.atan(Math.tan(vFov / 2) * Math.max(0.2, aspect));
+  const halfW = BOARD_W / 2 + 0.45;
+  const halfH = BOARD_H / 2 + 0.45;
+  const needW = halfW / Math.tan(hFov / 2);
+  const needH = halfH / Math.tan(vFov / 2);
+  return Math.max(needW, needH) * 1.06;
+}
+
+function fitCameraToBoard() {
+  const aspect = camera.aspect || 1;
+  fitDist = fitDistanceForAspect(aspect);
+  controls.maxDistance = Math.max(28, fitDist * 1.5);
+  // 保留目前方位角/極角，只把半徑拉到可以看見完整棋盤
+  const sph = new THREE.Spherical().setFromVector3(camera.position.clone().sub(controls.target));
+  sph.radius = fitDist;
+  camera.position.setFromSpherical(sph).add(controls.target);
+  camera.lookAt(controls.target);
+}
 
 // ---------------- 灯光 ----------------
 scene.add(new THREE.HemisphereLight(0xfff1dd, 0x241b12, 0.85));
@@ -480,7 +509,7 @@ let aiMoveStart = 0;
 let aiWorker = null;
 let aiModule = null;   // Worker 不可用時的主執行緒後備
 try {
-  aiWorker = new Worker(new URL('./ai-worker.js?v=2e197458e5', import.meta.url), { type: 'module' });
+  aiWorker = new Worker(new URL('./ai-worker.js?v=97c18d55a5', import.meta.url), { type: 'module' });
   aiWorker.onmessage = (e) => onAIResult(e.data);
   aiWorker.onerror = () => {
     aiWorker = null;
@@ -512,7 +541,7 @@ function requestAIMove() {
   if (aiWorker) {
     aiWorker.postMessage(payload);
   } else {
-    (aiModule ??= import('./ai.js?v=2e197458e5')).then(({ findBestMove }) => {
+    (aiModule ??= import('./ai.js?v=97c18d55a5')).then(({ findBestMove }) => {
       setTimeout(() => {
         if (token !== aiToken) return;
         onAIResult({ token, result: findBestMove(payload.board, payload.side, payload.level, payload.recent, payload.blind) });
@@ -1657,17 +1686,18 @@ function cancelCameraTween() {
 
 // 「視角」按鈕：在多個預設機位之間循環切換
 const CAMERA_VIEWS = [
-  { label: '紅方', dist: 14.8, polar: 45, azimuth: -90, tgt: HOME_TGT },
-  { label: '黑方', dist: 14.8, polar: 45, azimuth: 90, tgt: new THREE.Vector3(0, -0.1, -0.2) },
-  { label: '側面', dist: 14.8, polar: 55, azimuth: 0, tgt: new THREE.Vector3(0, -0.1, 0.2) },
-  { label: '俯視', dist: 14.2, polar: 8, azimuth: -90, tgt: new THREE.Vector3(0, 0, 0.2) },
+  { label: '紅方', dist: 0, polar: 45, azimuth: -90, tgt: HOME_TGT },
+  { label: '黑方', dist: 0, polar: 45, azimuth: 90, tgt: new THREE.Vector3(0, -0.1, -0.2) },
+  { label: '側面', dist: 0, polar: 55, azimuth: 0, tgt: new THREE.Vector3(0, -0.1, 0.2) },
+  { label: '俯視', dist: 0, polar: 8, azimuth: -90, tgt: new THREE.Vector3(0, 0, 0.2) },
 ];
 let viewIdx = 0;
 document.getElementById('btnView').addEventListener('click', () => {
   viewIdx = (viewIdx + 1) % CAMERA_VIEWS.length;
   const v = CAMERA_VIEWS[viewIdx];
+  const dist = v.dist > 0 ? v.dist : fitDist || HOME_DIST;
   const pos = new THREE.Vector3()
-    .setFromSphericalCoords(v.dist, THREE.MathUtils.degToRad(v.polar), THREE.MathUtils.degToRad(v.azimuth))
+    .setFromSphericalCoords(dist, THREE.MathUtils.degToRad(v.polar), THREE.MathUtils.degToRad(v.azimuth))
     .add(v.tgt);
   flyTo(pos, v.tgt);
   toast(`視角：${v.label}`);
@@ -1729,6 +1759,7 @@ if (savedPrefs) {
   if (Number.isInteger(savedPrefs.viewIdx)) {
     viewIdx = ((savedPrefs.viewIdx % CAMERA_VIEWS.length) + CAMERA_VIEWS.length) % CAMERA_VIEWS.length;
   }
+  cameraUserAdjusted = true;
 }
 window.addEventListener('pagehide', saveViewPrefs);
 document.getElementById('btnAgain').addEventListener('click', newGame);
@@ -1764,6 +1795,8 @@ function resize() {
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
   renderer.setSize(w, h);
+  // 窄螢幕（尤其手機直拿）需要更遠的鏡頭距離才能完整看到棋盤
+  if (!cameraUserAdjusted) fitCameraToBoard();
 }
 new ResizeObserver(resize).observe(container);
 resize();
