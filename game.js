@@ -1,6 +1,6 @@
 // ============================================================
-// 中國象棋規則引擎（純邏輯，不依賴 three.js）
-// 棋盘坐标：row 0 = 紅方底线（下方），row 9 = 黑方底线（上方）
+// 中国象棋规则引擎（純邏輯，不依賴 three.js）
+// 棋盘坐标：row 0 = 红方底线（下方），row 9 = 黑方底线（上方）
 // col 0..8 从左到右
 // ============================================================
 
@@ -9,8 +9,8 @@ export const COLS = 9;
 export const RED = 'red';
 export const BLACK = 'black';
 
-const RED_NAMES =   { K: '帥', A: '仕', B: '相', N: '傌', R: '俥', C: '炮', P: '兵' };
-const BLACK_NAMES = { K: '將', A: '士', B: '象', N: '馬', R: '車', C: '砲', P: '卒' };
+const RED_NAMES =   { K: '帅', A: '仕', B: '相', N: '马', R: '车', C: '炮', P: '兵' };
+const BLACK_NAMES = { K: '将', A: '士', B: '象', N: '马', R: '车', C: '炮', P: '卒' };
 
 export function name(side, type) {
   return (side === RED ? RED_NAMES : BLACK_NAMES)[type];
@@ -36,7 +36,7 @@ export function initialBoard() {
 
 // ---------------- 盲棋（暗棋）輔助 ----------------
 
-/** 簡單字串種子 → 32-bit 整數（空字串或 undefined 代表完全隨機） */
+/** 简单字串种子 → 32-bit 整数（空字串或 undefined 代表完全随机） */
 function seedToInt(seed) {
   if (seed === undefined || seed === null || seed === '') return (Math.random() * 0xffffffff) >>> 0;
   let h = 2166136261 >>> 0;
@@ -48,7 +48,7 @@ function seedToInt(seed) {
   return h >>> 0;
 }
 
-/** 可重現的偽隨機產生器 */
+/** 可重现的偽随机產生器 */
 export function mulberry32(seed) {
   let a = seed >>> 0;
   return function () {
@@ -59,7 +59,7 @@ export function mulberry32(seed) {
   };
 }
 
-/** 複製棋子資料（含盲棋隱藏欄位），用於悔棋快照 */
+/** 复制棋子资料（含盲棋隐藏欄位），用于悔棋快照 */
 export function snapshotPiece(p) {
   if (!p) return null;
   return {
@@ -72,24 +72,24 @@ export function snapshotPiece(p) {
   };
 }
 
-/** 將暗子翻開，恢復為真實身份 */
+/** 将暗子翻开，恢復为真实身份 */
 export function revealPiece(p) {
   if (!p || !p.faceDown) return p;
   if (p.realType && p.realSide) {
     p.type = p.realType;
     p.side = p.realSide;
   }
-  // 若沒有 realType/realSide（公開棋盤、AI 搜尋），維持目前的有效屬性
+  // 若没有 realType/realSide（公开棋盘、AI 搜尋），維持目前的有效屬性
   p.faceDown = false;
   return p;
 }
 
 /**
- * 盲棋初始棋盤：
- * - 將/帥固定原位、明置
- * - 其餘 30 子隨機放到 30 個非將帥初始格
- * - 所有非將帥棋子 faceDown = true
- * - 暗子未翻開前的 type/side = 所在初始格的原始棋子屬性
+ * 盲棋初始棋盘：
+ * - 将/帅固定原位、明置
+ * - 其餘 30 子随机放到 30 个非将帅初始格
+ * - 所有非将帅棋子 faceDown = true
+ * - 暗子未翻开前的 type/side = 所在初始格的原始棋子屬性
  */
 export function blindInitialBoard(seed = '') {
   const std = initialBoard();
@@ -137,9 +137,9 @@ export function blindInitialBoard(seed = '') {
 /**
  * 盲棋合法走法：
  * - 完全依暗子的「有效屬性」（所在初始格原始棋子）生成
- * - 不做「不能送將/送帥」過濾
- * - 不做「不能白臉將」過濾（允許移動後翻開造成任何局面）
- * - 盲棋變體：士/仕、象/相 都可以過河（不受九宮／河界限制）
+ * - 不做「不能送将/送帅」过濾
+ * - 不做「不能白脸将」过濾（允許移动后翻开造成任何局面）
+ * - 盲棋變体：士/仕、象/相 都可以过河（不受九宮／河界限制）
  */
 export function blindLegalMoves(b, r, c) {
   const p = b[r][c];
@@ -161,7 +161,7 @@ export function blindLegalMoves(b, r, c) {
     return out;
   }
   if (p.type === 'B') {
-    // 象：田字斜走兩步，但不再限河界
+    // 象：田字斜走两步，但不再限河界
     for (const [dr, dc] of [[2, 2], [2, -2], [-2, 2], [-2, -2]]) {
       const nr = r + dr, nc = c + dc;
       if (!inb(nr, nc)) continue;
@@ -174,10 +174,10 @@ export function blindLegalMoves(b, r, c) {
 }
 
 /**
- * 盲棋執行一步：
- * - 被吃的暗子先翻開再移除
- * - 移動的暗子在完成移動後立即翻開
- * - 回傳被吃的子（已被翻開公開）
+ * 盲棋执行一步：
+ * - 被吃的暗子先翻开再移除
+ * - 移动的暗子在完成移动后立即翻开
+ * - 回传被吃的子（已被翻开公开）
  */
 export function blindApplyMove(b, from, to) {
   const moved = b[from.r][from.c];
@@ -189,7 +189,7 @@ export function blindApplyMove(b, from, to) {
   return captured;
 }
 
-/** 盲棋：某方（依有效屬性）是否還有可走子 */
+/** 盲棋：某方（依有效屬性）是否还有可走子 */
 export function blindHasAnyLegalMove(b, side) {
   for (let r = 0; r < ROWS; r++)
     for (let c = 0; c < COLS; c++) {
@@ -199,7 +199,7 @@ export function blindHasAnyLegalMove(b, side) {
   return false;
 }
 
-/** 盲棋版本被將判斷：使用盲棋走法，暗子未移動前不照將 */
+/** 盲棋版本被将判断：使用盲棋走法，暗子未移动前不照将 */
 export function blindInCheck(b, side) {
   if (kingsFacing(b)) return true;
   const k = kingPos(b, side);
@@ -281,7 +281,7 @@ export function getMoves(b, r, c) {
       for (const [dr, dc, leg] of steps) {
         const nr = r + dr, nc = c + dc;
         if (!inb(nr, nc)) continue;
-        if (b[r + leg[0]][c + leg[1]]) continue; // 蹩馬腿
+        if (b[r + leg[0]][c + leg[1]]) continue; // 蹩马腿
         target(nr, nc);
       }
       break;
@@ -295,7 +295,7 @@ export function getMoves(b, r, c) {
       break;
     }
     case 'P': {
-      const dir = side === RED ? 1 : -1; // 紅向上（row 增大），黑向下
+      const dir = side === RED ? 1 : -1; // 红向上（row 增大），黑向下
       if (inb(r + dir, c)) target(r + dir, c);
       const crossed = side === RED ? r >= 5 : r <= 4; // 过河后可横走
       if (crossed) {
@@ -319,9 +319,9 @@ function slideMoves(b, r, c, out, side, foe, isCannon) {
         if (!isCannon || !mounted) out.push({ r: nr, c: nc });
       } else if (!mounted) {
         if (isCannon) {
-          mounted = true; // 炮：記下砲架繼續向前
+          mounted = true; // 炮：记下炮架繼续向前
         } else {
-          if (t.side === foe) out.push({ r: nr, c: nc }); // 車：吃掉第一個敵子
+          if (t.side === foe) out.push({ r: nr, c: nc }); // 车：吃掉第一个敌子
           break;
         }
       } else {
@@ -333,7 +333,7 @@ function slideMoves(b, r, c, out, side, foe, isCannon) {
   }
 }
 
-/** 雙方將/帥同一列且中間無子（對臉/飛將） */
+/** 双方将/帅同一列且中间无子（对脸/飛将） */
 export function kingsFacing(b) {
   const rk = kingPos(b, RED), bk = kingPos(b, BLACK);
   if (!rk || !bk) return false;
@@ -352,7 +352,7 @@ export function kingPos(b, side) {
   return null;
 }
 
-/** 局面雜湊字串（用於重複局面偵測） */
+/** 局面雜湊字串（用于重复局面偵测） */
 export function hashBoard(b) {
   let s = '';
   for (let r = 0; r < ROWS; r++)
@@ -367,7 +367,7 @@ export function hashBoard(b) {
   return s;
 }
 
-/** 某一方是否被將（含白臉將：將帥同列相照） */
+/** 某一方是否被将（含白脸将：将帅同列相照） */
 export function inCheck(b, side) {
   if (kingsFacing(b)) return true;
   const k = kingPos(b, side);
@@ -377,7 +377,7 @@ export function inCheck(b, side) {
     for (let c = 0; c < COLS; c++) {
       const p = b[r][c];
       if (!p || p.side !== foe) continue;
-      // 暗子未移動前不會持續照將；翻開後才具真實攻擊力
+      // 暗子未移动前不会持续照将；翻开后才具真实攻击力
       if (p.faceDown) continue;
       for (const m of getMoves(b, r, c))
         if (m.r === k.r && m.c === k.c) return true;
@@ -385,7 +385,7 @@ export function inCheck(b, side) {
   return false;
 }
 
-/** 過濾後真正合法的走法（不送將、不對臉） */
+/** 过濾后真正合法的走法（不送将、不对脸） */
 export function legalMoves(b, r, c) {
   const p = b[r][c];
   if (!p) return [];
@@ -397,7 +397,7 @@ export function legalMoves(b, r, c) {
   });
 }
 
-/** 執行一步棋，回被吃的子（null 表示沒吃到） */
+/** 执行一步棋，回被吃的子（null 表示没吃到） */
 export function applyMove(b, from, to) {
   const captured = b[to.r][to.c];
   b[to.r][to.c] = b[from.r][from.c];
@@ -414,17 +414,17 @@ export function hasAnyLegalMove(b, side) {
   return false;
 }
 
-// ---------------- 三次重複局面／長將 ----------------
+// ---------------- 三次重复局面／长将 ----------------
 /**
- * 三次重複局面判決（長將判負）：同一局面（含輪走方）出現第三次時——
- *   · 其間某一方每步都照將（長將）→ 該方判負
- *   · 雙方皆長將或皆非長將 → 判和
+ * 三次重复局面判决（长将判负）：同一局面（含轮走方）出现第三次时——
+ *   · 其间某一方每步都照将（长将）→ 该方判负
+ *   · 双方皆长将或皆非长将 → 判和
  * @param {Array<{key:string, mover:(string|null), check:boolean}>} records
- *   每步之後的局面記錄；[0] 為起始局面（mover=null）。
- *   key＝hashBoard(盤面)+'|'+輪走方（不含輪走方不算「同一局面」）。
- * @param {string} key 目前（剛形成）的局面鍵
- * @returns {null|{result:'loss', loser:string, reason:'長將'}|{result:'draw', reason:string}}
- *   null＝未構成三次重複
+ *   每步之后的局面记录；[0] 为起始局面（mover=null）。
+ *   key＝hashBoard(盘面)+'|'+轮走方（不含轮走方不算「同一局面」）。
+ * @param {string} key 目前（剛形成）的局面键
+ * @returns {null|{result:'loss', loser:string, reason:'长将'}|{result:'draw', reason:string}}
+ *   null＝未構成三次重复
  */
 export function repetitionVerdict(records, key) {
   const idxs = [];
@@ -440,18 +440,18 @@ export function repetitionVerdict(records, key) {
   }
   const redPerp = hasMoved[RED] && perpetual[RED];
   const blackPerp = hasMoved[BLACK] && perpetual[BLACK];
-  if (redPerp && !blackPerp) return { result: 'loss', loser: RED, reason: '長將' };
-  if (blackPerp && !redPerp) return { result: 'loss', loser: BLACK, reason: '長將' };
-  return { result: 'draw', reason: redPerp && blackPerp ? '雙方長將' : '三次重複局面' };
+  if (redPerp && !blackPerp) return { result: 'loss', loser: RED, reason: '长将' };
+  if (blackPerp && !redPerp) return { result: 'loss', loser: BLACK, reason: '长将' };
+  return { result: 'draw', reason: redPerp && blackPerp ? '双方长将' : '三次重复局面' };
 }
 
-// ---------------- 棋譜 notation ----------------
-// 普通記錄法：
-//   平（橫走）/ 斜走（傌象仕）：第四字＝到達的線路號
-//   直線進退（車炮將兵）：第四字＝進退的格數
+// ---------------- 棋谱 notation ----------------
+// 普通记录法：
+//   平（横走）/ 斜走（马象仕）：第四字＝到達的线路号
+//   直线进退（车炮将兵）：第四字＝进退的格数
 const CN = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
 
-/** 生成傳統棋譜，例如「傌八進七」「炮二平五」「兵五進一」 */
+/** 生成传统棋谱，例如「马八进七」「炮二平五」「兵五进一」 */
 export function notation(b, from, to) {
   const p = b[from.r][from.c];
   if (!p) return '?';
@@ -460,15 +460,15 @@ export function notation(b, from, to) {
   const head = name(side, p.type);
   const f1 = CN[fileOf(from.c)];
   if (from.c === to.c) {
-    // 直線進退：格數
+    // 直线进退：格数
     const steps = Math.abs(to.r - from.r);
     const advancing = (side === RED) ? to.r > from.r : to.r < from.r;
-    return `${head}${f1}${advancing ? '進' : '退'}${CN[steps]}`;
+    return `${head}${f1}${advancing ? '进' : '退'}${CN[steps]}`;
   }
   if (to.r === from.r) {
     return `${head}${f1}平${CN[fileOf(to.c)]}`;
   }
   const advancing = (side === RED) ? to.r > from.r : to.r < from.r;
-  // 斜走（傌象仕）：到達線路
-  return `${head}${f1}${advancing ? '進' : '退'}${CN[fileOf(to.c)]}`;
+  // 斜走（马象仕）：到達线路
+  return `${head}${f1}${advancing ? '进' : '退'}${CN[fileOf(to.c)]}`;
 }

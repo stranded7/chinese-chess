@@ -1,5 +1,5 @@
 // ============================================================
-// 中國象棋 3D —— Three.js 呈現 + 互動
+// 中国象棋 3D —— Three.js 呈现 + 互动
 // ============================================================
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -9,15 +9,15 @@ import {
   hasAnyLegalMove, name, notation, hashBoard, repetitionVerdict, kingPos,
   blindInitialBoard, blindLegalMoves, blindApplyMove, blindInCheck,
   snapshotPiece,
-} from './game.js?v=c1d8430295';
+} from './game.js?v=5f991754c5';
 
-// ---------------- 常數 ----------------
+// ---------------- 常数 ----------------
 const CELL = 1;
 const PAD = 0.6;
 const BOARD_W = (COLS - 1) * CELL + PAD * 2;
 const BOARD_H = (ROWS - 1) * CELL + PAD * 2;
 const PIECE_H = 0.36;
-const Y0 = PIECE_H / 2; // 棋子中心高度（貼著盤面）
+const Y0 = PIECE_H / 2; // 棋子中心高度（贴着盘面）
 
 const to3D = (r, c) =>
   new THREE.Vector3((c - (COLS - 1) / 2) * CELL, 0, ((ROWS - 1) / 2 - r) * CELL);
@@ -30,7 +30,7 @@ scene.fog = new THREE.Fog(0x171310, 20, 46);
 
 const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
 
-// 預設機位：以注視點為圓心，向左旋轉 90°（方位角 -90°）、向下翻轉 45°（極角 45°）
+// 预设机位：以注视点为圓心，向左旋转 90°（方位角 -90°）、向下翻转 45°（极角 45°）
 const HOME_DIST = 14.8;
 const HOME_AZIMUTH = -90;
 const HOME_POLAR = 45;
@@ -67,11 +67,11 @@ controls.maxPolarAngle = 1.38;
 controls.enablePan = false;
 controls.update();
 
-// ---------------- 手機／窄螢幕：依解析度自動拉遠鏡頭，讓整盤都能看見 ----------------
+// ---------------- 手机／窄屏幕：依解析度自动拉远镜头，让整盘都能看见 ----------------
 let fitDist = HOME_DIST;
 let cameraUserAdjusted = false;
 controls.addEventListener('start', () => {
-  // 使用者開始拖曳／縮放後，不再每次 resize 都強制拉遠
+  // 使用者开始拖曳／缩放后，不再每次 resize 都强制拉远
   cameraUserAdjusted = true;
 });
 
@@ -89,7 +89,7 @@ function fitCameraToBoard() {
   const aspect = camera.aspect || 1;
   fitDist = fitDistanceForAspect(aspect);
   controls.maxDistance = Math.max(28, fitDist * 1.5);
-  // 保留目前方位角/極角，只把半徑拉到可以看見完整棋盤
+  // 保留目前方位角/极角，只把半徑拉到可以看见完整棋盘
   const sph = new THREE.Spherical().setFromVector3(camera.position.clone().sub(controls.target));
   sph.radius = fitDist;
   camera.position.setFromSpherical(sph).add(controls.target);
@@ -119,7 +119,7 @@ function makeBoardTexture() {
   cv.width = W; cv.height = H;
   const g = cv.getContext('2d');
 
-  // 木紋底
+  // 木纹底
   const grd = g.createLinearGradient(0, 0, W, H);
   grd.addColorStop(0, '#e0b884');
   grd.addColorStop(0.5, '#d5a971');
@@ -146,14 +146,14 @@ function makeBoardTexture() {
   g.lineWidth = 3;
   g.strokeRect(pad, pad, W - pad * 2, H - pad * 2);
 
-  // 橫線
+  // 横线
   for (let r = 0; r < ROWS; r++) line(P(r, 0), P(r, COLS - 1));
-  // 縱線（中間被楚河漢界斷開，兩邊界線貫穿）
+  // 縱线（中间被楚河汉界断开，两邊界线貫穿）
   for (let c = 0; c < COLS; c++) {
     if (c === 0 || c === COLS - 1) line(P(0, c), P(ROWS - 1, c));
     else { line(P(0, c), P(4, c)); line(P(5, c), P(9, c)); }
   }
-  // 九宮斜線
+  // 九宮斜线
   line(P(0, 3), P(2, 5)); line(P(0, 5), P(2, 3));
   line(P(7, 3), P(9, 5)); line(P(7, 5), P(9, 3));
 
@@ -173,8 +173,8 @@ function makeBoardTexture() {
     [6, 0], [6, 2], [6, 4], [6, 6], [6, 8],
   ]) star(r, c);
 
-  // 楚河 / 漢界 —— 直書：字沿河界縱向排列，且在預設視角下正立
-  // （貼圖相對於畫面旋轉了 90°：畫面上方 = 貼圖 +x，故字需旋轉 90° 並沿 x 排列）
+  // 楚河 / 汉界 —— 直書：字沿河界縱向排列，且在预设视角下正立
+  // （贴圖相对于画面旋转了 90°：画面上方 = 贴圖 +x，故字需旋转 90° 并沿 x 排列）
   g.fillStyle = 'rgba(74,51,32,0.8)';
   g.font = '56px "Kaiti SC","STKaiti","KaiTi","Noto Serif TC",serif';
   g.textAlign = 'center';
@@ -187,8 +187,8 @@ function makeBoardTexture() {
     g.fillText(ch, 0, 3);
     g.restore();
   };
-  vChar('楚', 264); vChar('河', 196);          // 畫面下方直書「楚河」
-  vChar('漢', W - 196); vChar('界', W - 264);  // 畫面上方直書「漢界」
+  vChar('楚', 264); vChar('河', 196);          // 画面下方直書「楚河」
+  vChar('汉', W - 196); vChar('界', W - 264);  // 画面上方直書「汉界」
 
   const tex = new THREE.CanvasTexture(cv);
   tex.colorSpace = THREE.SRGBColorSpace;
@@ -204,7 +204,7 @@ boardMesh.rotation.x = -Math.PI / 2;
 boardMesh.receiveShadow = true;
 scene.add(boardMesh);
 
-// 盤底座
+// 盘底座
 const slab = new THREE.Mesh(
   new THREE.BoxGeometry(BOARD_W + 0.55, 0.34, BOARD_H + 0.55),
   new THREE.MeshStandardMaterial({ color: 0x4a3626, roughness: 0.55, metalness: 0.12 })
@@ -278,7 +278,7 @@ function makeTopTexture(side, type) {
   g.font = '900 118px "Kaiti SC","STKaiti","KaiTi","Noto Serif TC",serif';
   g.textAlign = 'center';
   g.textBaseline = 'middle';
-  // 棋子文字朝向持有者：紅方在原點側（畫面下方），黑方在遠端（畫面上方）
+  // 棋子文字朝向持有者：红方在原点侧（画面下方），黑方在远端（画面上方）
   if (side === BLACK) {
     g.translate(s / 2, s / 2);
     g.rotate(Math.PI);
@@ -337,7 +337,7 @@ function makePiece(piece, r, c) {
   return m;
 }
 
-/** 棋子在暗子翻開／悔棋恢復暗子後，更新 3D 頂面貼圖 */
+/** 棋子在暗子翻开／悔棋恢復暗子后，更新 3D 顶面贴圖 */
 function updatePieceMesh(mesh) {
   if (!mesh) return;
   const piece = mesh.userData.piece;
@@ -357,7 +357,7 @@ selRing.rotation.x = -Math.PI / 2;
 selRing.visible = false;
 scene.add(selRing);
 
-// 最後一步標記（起點淡、終點深）
+// 最后一步标记（起点淡、终点深）
 function mkLastMark(opacity) {
   const m = new THREE.Mesh(
     new THREE.PlaneGeometry(0.92, 0.92),
@@ -401,7 +401,7 @@ function showMoveDots(moves) {
   for (const m of moves) {
     const p = to3D(m.r, m.c);
     if (board[m.r][m.c]) {
-      // 可吃敵子：紅圈包圍
+      // 可吃敌子：红圈包围
       const ring = new THREE.Mesh(
         new THREE.RingGeometry(0.5, 0.64, 48),
         new THREE.MeshBasicMaterial({ color: 0xe2736a, transparent: true, opacity: 0.9, side: THREE.DoubleSide })
@@ -410,7 +410,7 @@ function showMoveDots(moves) {
       addFX(ring);
       ring.position.x = p.x; ring.position.z = p.z;
     } else {
-      // 可走空位：綠點
+      // 可走空位：綠点
       const dot = new THREE.Mesh(
         new THREE.CircleGeometry(0.28, 32),
         new THREE.MeshBasicMaterial({ color: 0x9fd68f, transparent: true, opacity: 0.85 })
@@ -441,7 +441,7 @@ function beep(freq, dur = 0.08, type = 'sine', gain = 0.12) {
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     o.start(t);
     o.stop(t + dur);
-  } catch { /* 無音訊環境則忽略 */ }
+  } catch { /* 无音讯环境则忽略 */ }
 }
 const sfx = {
   select: () => beep(680, 0.05, 'triangle'),
@@ -458,7 +458,7 @@ const ease = (k) => (k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2);
 function tween(dur, fn, done, delay = 0, tag = null) {
   tweens.push({ t0: performance.now() + delay, dur, fn, done, tag });
 }
-// 分頁隱藏時 rAF 會暫停；用計時器低頻補跑主迴圈，避免棋局卡在動畫中
+// 分页隐藏时 rAF 会暫停；用计时器低頻補跑主迴圈，避免棋局卡在动畫中
 setInterval(() => { if (document.hidden) tick(performance.now()); }, 500);
 
 function stepTweens(now) {
@@ -475,23 +475,23 @@ function stepTweens(now) {
   }
 }
 
-// ---------------- 遊戲状态 ----------------
+// ---------------- 游戏状态 ----------------
 let board = null;
 let turn = RED;
 let selected = null;   // {r,c}
-let legal = [];        // 選中子的合法著法
+let legal = [];        // 选中子的合法着法
 let pieces = [];       // 所有棋子 mesh
 let history = [];      // {from,to,captured,nota}
-let posHistory = [];   // 每步之後的局面雜湊，供 AI 避免重複局面
-let repHistory = [];   // {key,mover,check}：三次重複局面／長將判決用
+let posHistory = [];   // 每步之后的局面雜湊，供 AI 避免重复局面
+let repHistory = [];   // {key,mover,check}：三次重复局面／长将判决用
 let capturedBy = { [RED]: [], [BLACK]: [] };
 let over = false, winner = null, busy = false;
 let gameStartTime = Date.now();
-let undoCount = 0;     // 本局悔棋次數（人機模式一次連退兩著仍計 1 次）
+let undoCount = 0;     // 本局悔棋次数（人机模式一次连退两着仍计 1 次）
 
-// ---------------- 對弈模式 / AI ----------------
-let mode = 'medium';   // 'pvp' | 'blind' | 'lan' | 'easy' | 'medium' | 'hard'
-const AI_SIDE = BLACK; // 人機模式：玩家執紅，AI 執黑
+// ---------------- 对弈模式 / AI ----------------
+let mode = 'lan';   // 'pvp' | 'blind' | 'lan' | 'easy' | 'medium' | 'hard'
+const AI_SIDE = BLACK; // 人机模式：玩家执红，AI 执黑
 const isAI = () => mode !== 'pvp' && mode !== 'blind' && mode !== 'lan';
 const isBlind = () => mode === 'blind' || mode === 'lan' || mode === 'blindai';
 const isLAN = () => mode === 'lan';
@@ -503,13 +503,13 @@ let lanConnected = false;
 let lanPendingAction = null;
 let lanOverTimer = null;
 let aiThinking = false;
-let aiToken = 0;       // 用於作廢過期的 AI 計算（開新局、悔棋後）
+let aiToken = 0;       // 用于作廢过期的 AI 计算（开新局、悔棋后）
 let aiMoveStart = 0;
 
 let aiWorker = null;
-let aiModule = null;   // Worker 不可用時的主執行緒後備
+let aiModule = null;   // Worker 不可用时的主执行緒后备
 try {
-  aiWorker = new Worker(new URL('./ai-worker.js?v=c1d8430295', import.meta.url), { type: 'module' });
+  aiWorker = new Worker(new URL('./ai-worker.js?v=5f991754c5', import.meta.url), { type: 'module' });
   aiWorker.onmessage = (e) => onAIResult(e.data);
   aiWorker.onerror = () => {
     aiWorker = null;
@@ -541,7 +541,7 @@ function requestAIMove() {
   if (aiWorker) {
     aiWorker.postMessage(payload);
   } else {
-    (aiModule ??= import('./ai.js?v=c1d8430295')).then(({ findBestMove }) => {
+    (aiModule ??= import('./ai.js?v=5f991754c5')).then(({ findBestMove }) => {
       setTimeout(() => {
         if (token !== aiToken) return;
         onAIResult({ token, result: findBestMove(payload.board, payload.side, payload.level, payload.recent, payload.blind) });
@@ -561,7 +561,7 @@ function maybeAIMove() {
 function onAIResult({ token, result, error }) {
   if (token !== aiToken) return;
   if (error || !result) { aiThinking = false; refreshHUD(); return; }
-  // 至少顯示一小段「思考中」，節奏比較自然
+  // 至少显示一小段「思考中」，节奏比較自然
   const wait = Math.max(0, 500 - (performance.now() - aiMoveStart));
   setTimeout(() => {
     if (token !== aiToken) return;
@@ -576,7 +576,7 @@ function onAIResult({ token, result, error }) {
   }, wait);
 }
 
-// 除錯／自動測試掛鉤
+// 除错／自动测试挂鉤
 window.__chess = {
   get pieces() { return pieces; },
   get board() { return board; },
@@ -622,14 +622,14 @@ function refreshHUD() {
   const showSide = over && winner ? winner : turn;
   const isRed = showSide === RED;
   if (over) {
-    turnText.textContent = winner == null ? '和局' : winner === RED ? '紅方勝' : '黑方勝';
+    turnText.textContent = winner == null ? '和局' : winner === RED ? '红方胜' : '黑方胜';
   } else if (aiThinking) {
     turnText.textContent = 'AI 思考中…';
   } else if (isAI()) {
-    turnText.textContent = isRed ? '輪到你了' : 'AI 行棋';
+    turnText.textContent = isRed ? '轮到你了' : 'AI 行棋';
   } else {
-    const prefix = isLAN() ? '聯機盲棋・' : isBlind() ? '盲棋・' : '';
-    turnText.textContent = prefix + (isRed ? '紅方行棋' : '黑方行棋');
+    const prefix = isLAN() ? '联机盲棋・' : isBlind() ? '盲棋・' : '';
+    turnText.textContent = prefix + (isRed ? '红方行棋' : '黑方行棋');
   }
   const col = isRed ? '#c05345' : '#8b93a1';
   turnDot.style.background = col;
@@ -645,7 +645,7 @@ function addLog(nota, side) {
   const li = document.createElement('li');
   const dot = document.createElement('span');
   dot.className = 'side ' + side;
-  dot.textContent = side === RED ? '紅' : '黑';
+  dot.textContent = side === RED ? '红' : '黑';
   li.appendChild(dot);
   li.appendChild(document.createTextNode(' ' + nota));
   logEl.appendChild(li);
@@ -700,7 +700,7 @@ function buildScene() {
 }
 
 
-/** 依目前 board 同步 3D 棋子，避免每次重播都整盤重建動畫 */
+/** 依目前 board 同步 3D 棋子，避免每次重播都整盘重建动畫 */
 function syncSceneFromBoard() {
   const oldPieces = pieces.slice();
   const byId = new Map();
@@ -756,29 +756,29 @@ function getSeedInput() {
 }
 
 
-// ---------------- 聯機模式（LAN / WebSocket） ----------------
+// ---------------- 联机模式（LAN / WebSocket） ----------------
 function updateLanPanel() {
   if (!lanPanel) return;
   const visible = isLAN();
   lanPanel.classList.toggle('hidden', !visible);
   if (!visible) { lanPanel.classList.remove('playing'); return; }
   if (!lanConnected) {
-    lanStatus.textContent = '尚未連線，請建立或加入房間';
+    lanStatus.textContent = '尚未连线，请建立或加入房间';
     lanJoinForm.classList.remove('hidden');
     lanInfo.classList.add('hidden');
     btnLanLeave.classList.add('hidden');
   } else if (!lanRoomCode) {
-    lanStatus.textContent = '已連線，請建立或加入房間';
+    lanStatus.textContent = '已连线，请建立或加入房间';
     lanJoinForm.classList.remove('hidden');
     lanInfo.classList.add('hidden');
     btnLanLeave.classList.add('hidden');
   } else {
-    lanStatus.textContent = lanWaiting ? '已建立房間，等待對方加入…' : '對戰進行中';
+    lanStatus.textContent = lanWaiting ? '已建立房间，等待对方加入…' : '对战进行中';
     lanJoinForm.classList.add('hidden');
     lanInfo.classList.remove('hidden');
     btnLanLeave.classList.remove('hidden');
     lanRoomCodeEl.textContent = lanRoomCode;
-    lanSideEl.textContent = lanSide === RED ? '紅方（先手）' : '黑方（後手）';
+    lanSideEl.textContent = lanSide === RED ? '红方（先手）' : '黑方（后手）';
     lanWaitingEl.classList.toggle('hidden', !lanWaiting);
   }
   if (lanPanel) lanPanel.classList.toggle('playing', !!lanRoomCode && !lanWaiting);
@@ -791,7 +791,7 @@ function lanConnect() {
   try {
     lanSocket = new WebSocket(url);
   } catch {
-    lanStatus.textContent = 'WebSocket 連線失敗';
+    lanStatus.textContent = 'WebSocket 连线失敗';
     return;
   }
   lanSocket.addEventListener('open', () => {
@@ -811,13 +811,13 @@ function lanConnect() {
   lanSocket.addEventListener('close', () => {
     lanConnected = false;
     lanSocket = null;
-    lanStatus.textContent = '連線已中斷';
+    lanStatus.textContent = '连线已中断';
     updateLanPanel();
   });
   lanSocket.addEventListener('error', () => {
     lanConnected = false;
-    lanStatus.textContent = '連線錯誤，請用 node server.mjs 啟動聯機伺服器';
-    toast('連線失敗，請改用 node server.mjs 啟動');
+    lanStatus.textContent = '连线错误，请用 node server.mjs 启动联机服务器';
+    toast('连线失敗，请改用 node server.mjs 启动');
     updateLanPanel();
   });
   updateLanPanel();
@@ -825,7 +825,7 @@ function lanConnect() {
 
 function lanSend(obj) {
   if (!lanSocket || lanSocket.readyState !== 1) {
-    toast('尚未連線到聯機伺服器');
+    toast('尚未连线到联机服务器');
     return;
   }
   lanSocket.send(JSON.stringify(obj));
@@ -833,7 +833,7 @@ function lanSend(obj) {
 
 function lanCreateRoom() {
   if (!lanConnected) {
-    lanStatus.textContent = '正在連線到聯機伺服器…';
+    lanStatus.textContent = '正在连线到联机服务器…';
     lanPendingAction = { type: 'create', seed: getSeedInput() };
     lanConnect();
     return;
@@ -843,9 +843,9 @@ function lanCreateRoom() {
 
 function lanJoinRoom() {
   const code = (lanCodeInput.value || '').trim().toUpperCase();
-  if (!code) { toast('請輸入房間號'); return; }
+  if (!code) { toast('请输入房间号'); return; }
   if (!lanConnected) {
-    lanStatus.textContent = '正在連線到聯機伺服器…';
+    lanStatus.textContent = '正在连线到联机服务器…';
     lanPendingAction = { type: 'join', code };
     lanConnect();
     return;
@@ -875,8 +875,8 @@ function renderLanLogs(logs) {
   for (const line of logs) {
     const li = document.createElement('li');
     const dot = document.createElement('span');
-    dot.className = 'side ' + (line.startsWith('紅方') ? RED : line.startsWith('黑方') ? BLACK : '');
-    dot.textContent = line.startsWith('紅方') ? '紅' : line.startsWith('黑方') ? '黑' : '·';
+    dot.className = 'side ' + (line.startsWith('红方') ? RED : line.startsWith('黑方') ? BLACK : '');
+    dot.textContent = line.startsWith('红方') ? '红' : line.startsWith('黑方') ? '黑' : '·';
     li.appendChild(dot);
     li.appendChild(document.createTextNode(' ' + line));
     logEl.appendChild(li);
@@ -906,7 +906,7 @@ function applyLanState(msg) {
   renderLanLogs(msg.logs || []);
   refreshHUD();
   if (!over) {
-    // 新對局／重開時關閉結算層
+    // 新对局／重开时关闭结算层
     if (lanOverTimer) { clearTimeout(lanOverTimer); lanOverTimer = null; }
     stopConfetti();
     overlay.classList.add('hidden');
@@ -915,7 +915,7 @@ function applyLanState(msg) {
     if (lanOverTimer) clearTimeout(lanOverTimer);
     lanOverTimer = setTimeout(() => {
       lanOverTimer = null;
-      showGameOver(msg.endReason || '吃掉將帥');
+      showGameOver(msg.endReason || '吃掉将帅');
     }, 300);
   }
   updateLanPanel();
@@ -926,20 +926,20 @@ function handleLanMessage(msg) {
     lanRoomCode = msg.code;
     lanSide = msg.side;
     lanWaiting = true;
-    toast(`房間已建立：${msg.code}`);
+    toast(`房间已建立：${msg.code}`);
     updateLanPanel();
   } else if (msg.type === 'state') {
     applyLanState(msg);
   } else if (msg.type === 'opponentJoined') {
     lanWaiting = false;
-    toast('對方已加入！');
+    toast('对方已加入！');
     updateLanPanel();
   } else if (msg.type === 'opponentLeft') {
     lanWaiting = false;
-    toast('對方已離開房間');
+    toast('对方已离开房间');
     updateLanPanel();
   } else if (msg.type === 'error') {
-    toast(msg.message || '錯誤');
+    toast(msg.message || '错误');
     busy = false;
     updateLanPanel();
   } else if (msg.type === 'pong') {
@@ -991,7 +991,7 @@ function newGame() {
   refreshHUD();
 }
 
-/** 測試用：直接佈局 */
+/** 测试用：直接布局 */
 function resetTo(customBoard, turnSide) {
   tweens.length = 0;
   aiToken++;
@@ -1039,8 +1039,8 @@ function doMove(from, to) {
   const capturedSnapshot = blind ? snapshotPiece(captured) : null;
 
   if (blind) {
-    // 被吃暗子會在 blindApplyMove 內先翻開；翻開後立刻更新 mesh，
-    // 這樣縮小移除前雙方能看到真實身份。
+    // 被吃暗子会在 blindApplyMove 内先翻开；翻开后立刻更新 mesh，
+    // 这样缩小移除前双方能看到真实身份。
     blindApplyMove(board, from, to);
     if (captured && capturedSnapshot?.faceDown) updatePieceMesh(cap);
   } else {
@@ -1063,7 +1063,7 @@ function doMove(from, to) {
     p.position.lerpVectors(from3, to3, k);
     p.position.y = Y0 + Math.sin(Math.PI * k) * 0.55;
   }, () => {
-    // 移動的暗子在走到目的地後立即翻開，更新 3D 貼圖
+    // 移动的暗子在走到目的地后立即翻开，更新 3D 贴圖
     if (blind && fromSnapshot && fromSnapshot.faceDown) updatePieceMesh(p);
     if (cap) {
       sfx.capture();
@@ -1090,10 +1090,10 @@ function finishMove(nota, captured) {
     const entry = history[history.length - 1];
     if (entry?.blind?.fromSnapshot?.faceDown) {
       const moved = board[entry.to.r][entry.to.c];
-      if (moved) logNota += `（翻開為${name(moved.side, moved.type)}）`;
+      if (moved) logNota += `（翻开为${name(moved.side, moved.type)}）`;
     }
     if (captured && entry?.blind?.capturedSnapshot?.faceDown) {
-      logNota += `，吃子翻開為${name(captured.side, captured.type)}`;
+      logNota += `，吃子翻开为${name(captured.side, captured.type)}`;
     }
   }
   addLog(logNota, turn);
@@ -1104,18 +1104,18 @@ function finishMove(nota, captured) {
   const checked = blind ? blindInCheck(board, turn) : inCheck(board, turn);
   repHistory.push({ key: hashBoard(board) + '|' + turn, mover, check: checked });
 
-  let endReason = null; // '吃掉將帥' | '將死' | '困斃' | '長將' | '三次重複局面' | '雙方長將'
+  let endReason = null; // '吃掉将帅' | '将死' | '困毙' | '长将' | '三次重复局面' | '双方长将'
 
   if (blind) {
-    // 盲棋第一版：只以「將/帥被吃」為終局條件，不使用將死/困斃/長將判決。
+    // 盲棋第一版：只以「将/帅被吃」为终局条件，不使用将死/困毙/长将判决。
     if (!kingPos(board, RED)) {
       over = true;
       winner = BLACK;
-      endReason = '吃掉將帥';
+      endReason = '吃掉将帅';
     } else if (!kingPos(board, BLACK)) {
       over = true;
       winner = RED;
-      endReason = '吃掉將帥';
+      endReason = '吃掉将帅';
     }
     if (checked) {
       sfx.check();
@@ -1132,15 +1132,15 @@ function finishMove(nota, captured) {
   if (!has) {
     over = true;
     winner = turn === RED ? BLACK : RED;
-    endReason = checked ? '將死' : '困斃';
+    endReason = checked ? '将死' : '困毙';
   } else {
-    // 長將判負／三次重複局面判和
+    // 长将判负／三次重复局面判和
     const verdict = repetitionVerdict(repHistory, repHistory[repHistory.length - 1].key);
     if (verdict) {
       over = true;
       if (verdict.result === 'loss') {
         winner = verdict.loser === RED ? BLACK : RED;
-        endReason = '長將';
+        endReason = '长将';
       } else {
         winner = null;
         endReason = verdict.reason;
@@ -1153,7 +1153,7 @@ function finishMove(nota, captured) {
   }
   if (over) {
     refreshHUD();
-    setTimeout(() => showGameOver(endReason), endReason === '將死' ? 900 : 300);
+    setTimeout(() => showGameOver(endReason), endReason === '将死' ? 900 : 300);
   }
   refreshHUD();
   maybeAIMove();
@@ -1171,7 +1171,7 @@ function undoPly() {
   repHistory.pop();
   const p = pieceAt(h.to.r, h.to.c);
 
-  // 盲棋：先還原移動棋子的暗子／真實身份，再移動回去
+  // 盲棋：先还原移动棋子的暗子／真实身份，再移动回去
   if (h.blind && h.blind.fromSnapshot) {
     Object.assign(p.userData.piece, h.blind.fromSnapshot);
   }
@@ -1187,7 +1187,7 @@ function undoPly() {
     const restored = h.blind?.capturedSnapshot
       ? { ...h.blind.capturedSnapshot }
       : h.captured;
-    board[h.to.r][h.to.c] = restored; // 被吃的子也要放回邏輯棋盤，不能只復原 mesh
+    board[h.to.r][h.to.c] = restored; // 被吃的子也要放回邏輯棋盘，不能只復原 mesh
     const cm = makePiece(restored, h.to.r, h.to.c);
     pieces.push(cm);
     scene.add(cm);
@@ -1199,9 +1199,9 @@ function undoPly() {
 function undo() {
   if (isLAN() || !history.length || busy || aiThinking) return;
   undoCount++;
-  aiToken++; // 作廢進行中的 AI 計算
+  aiToken++; // 作廢进行中的 AI 计算
   undoPly();
-  // 人機模式：連 AI 那一步一起退，回到玩家回合
+  // 人机模式：连 AI 那一步一起退，回到玩家回合
   if (isAI() && turn === AI_SIDE && history.length) undoPly();
   addLog('悔棋', turn);
   if (over) { over = false; winner = null; }
@@ -1212,7 +1212,7 @@ function undo() {
   refreshHUD();
 }
 
-// ---------------- 輸入 ----------------
+// ---------------- 输入 ----------------
 const ray = new THREE.Raycaster();
 const ndc = new THREE.Vector2();
 function pick(event) {
@@ -1223,7 +1223,7 @@ function pick(event) {
   const hits = ray.intersectObjects(pieces, false);
   const obj = hits.length ? hits[0].object : null;
   if (obj && obj.userData.piece) return obj;
-  // 2) 再找盤面，吸附到最近的交叉點
+  // 2) 再找盘面，吸附到最近的交叉点
   const bh = ray.intersectObject(boardMesh, false);
   if (bh.length) {
     const p = bh[0].point;
@@ -1247,13 +1247,13 @@ renderer.domElement.addEventListener('pointermove', (e) => {
 
 let downXY = null;
 renderer.domElement.addEventListener('pointerdown', (e) => { downXY = [e.clientX, e.clientY]; });
-// 拖曳／滾輪結束後記住視角（個人化，存瀏覽器）
+// 拖曳／滚轮结束后记住视角（个人化，存浏览器）
 renderer.domElement.addEventListener('pointerup', queueSaveViewPrefs);
 renderer.domElement.addEventListener('wheel', queueSaveViewPrefs, { passive: true });
 
 renderer.domElement.addEventListener('click', (e) => {
   if (downXY && Math.hypot(e.clientX - downXY[0], e.clientY - downXY[1]) > 8) {
-    downXY = null; // 拖曳旋轉視角後產生的 click，忽略
+    downXY = null; // 拖曳旋转视角后產生的 click，忽略
     return;
   }
   downXY = null;
@@ -1261,11 +1261,11 @@ renderer.domElement.addEventListener('click', (e) => {
   const hit = pick(e);
   if (!hit) { clearSelection(); refreshHUD(); return; }
 
-  // 點到棋子
+  // 点到棋子
   if (hit.userData && hit.userData.piece) {
     const { r, c, piece } = hit.userData;
     if (piece.side !== turn) {
-      // 敵子：若為合法目標則執行
+      // 敌子：若为合法目标则执行
       if (selected && legal.some((m) => m.r === r && m.c === c)) {
         if (isLAN()) lanSendMove(selected, { r, c });
         else doMove(selected, { r, c });
@@ -1277,7 +1277,7 @@ renderer.domElement.addEventListener('click', (e) => {
     return;
   }
 
-  // 點到空交叉點：合法則走，否則取消選中
+  // 点到空交叉点：合法则走，否则取消选中
   const { r, c } = hit;
   if (selected && legal.some((m) => m.r === r && m.c === c)) {
     if (isLAN()) lanSendMove(selected, { r, c });
@@ -1288,13 +1288,13 @@ renderer.domElement.addEventListener('click', (e) => {
   refreshHUD();
 });
 
-// ---------------- 終局畫面 / 彩帶 / 分享 ----------------
+// ---------------- 终局画面 / 彩帶 / 分享 ----------------
 const SITE_URL = 'https://chinese-chess.gh.miniasp.com/';
 const DIFF = {
-  easy:   { label: '簡單', stars: 1, winTitle: '旗開得勝！', winSub: '小試身手就拿下 AI，好的開始！' },
-  medium: { label: '中等', stars: 2, winTitle: '運籌帷幄！', winSub: '攻守有度，中等 AI 也不是你的對手！' },
-  hard:   { label: '困難', stars: 3, winTitle: '棋壇霸主！', winSub: '深算遠謀，最強 AI 也俯首稱臣！' },
-  blindai:{ label: '盲棋', stars: 2, winTitle: '盲棋突圍！', winSub: '在暗棋迷霧中勝出，好眼力！' },
+  easy:   { label: '简单', stars: 1, winTitle: '旗开得胜！', winSub: '小试身手就拿下 AI，好的开始！' },
+  medium: { label: '中等', stars: 2, winTitle: '运籌帷幄！', winSub: '攻守有度，中等 AI 也不是你的对手！' },
+  hard:   { label: '困难', stars: 3, winTitle: '棋壇霸主！', winSub: '深算远謀，最强 AI 也俯首称臣！' },
+  blindai:{ label: '盲棋', stars: 2, winTitle: '盲棋突围！', winSub: '在暗棋迷雾中胜出，好眼力！' },
 };
 
 const ovCard = document.getElementById('ovCard');
@@ -1323,46 +1323,46 @@ function toast(msg) {
 
 function showGameOver(endReason) {
   const pvp = !isAI();
-  const pvpLabel = isLAN() ? '聯機・盲棋' : isBlind() ? '盲棋・雙人' : '雙人對弈';
+  const pvpLabel = isLAN() ? '联机・盲棋' : isBlind() ? '盲棋・双人' : '双人对弈';
   const draw = winner == null;
   const playerWin = !pvp && !draw && winner !== AI_SIDE;
   const d = pvp ? null : DIFF[mode];
-  const plies = Math.max(1, history.length); // 棋譜著法數
+  const plies = Math.max(1, history.length); // 棋谱着法数
   const secs = Math.max(1, Math.round((Date.now() - gameStartTime) / 1000));
   const caps = pvp ? capturedBy[winner ?? RED].length : capturedBy[RED].length;
   const pure = undoCount === 0; // 全程零悔棋：純度勳章
-  const reasonChars = draw ? '和棋' : endReason; // 戰績卡紅印：將死/困斃/長將/和棋
-  const winLabel = winner === RED ? '紅方' : '黑方';
+  const reasonChars = draw ? '和棋' : endReason; // 战绩卡红印：将死/困毙/长将/和棋
+  const winLabel = winner === RED ? '红方' : '黑方';
   const celebrate = !draw && (pvp || playerWin);
 
   let title, sub, badge, cardTitle, cardSub, shareText;
   if (draw) {
     title = '和局';
-    sub = pvp ? '棋逢敵手，握手言和！' : '勢均力敵，不分勝負！';
-    badge = pvp ? pvpLabel : `人機對弈 ・ ${d.label}`;
+    sub = pvp ? '棋逢敌手，握手言和！' : '势均力敌，不分胜负！';
+    badge = pvp ? pvpLabel : `人机对弈 ・ ${d.label}`;
     cardTitle = '和局';
-    cardSub = `${pvp ? pvpLabel : `「${d.label}」AI`} ・ 鏖戰 ${plies} 著${pure ? ' ・ 零悔棋' : ''}`;
-    shareText = `我們在 3D 中國象棋鏖戰 ${plies} 著，弈和不分勝負！來對弈一局：${SITE_URL}`;
+    cardSub = `${pvp ? pvpLabel : `「${d.label}」AI`} ・ 鏖战 ${plies} 着${pure ? ' ・ 零悔棋' : ''}`;
+    shareText = `我們在 3D 中国象棋鏖战 ${plies} 着，弈和不分胜负！來对弈一局：${SITE_URL}`;
   } else if (pvp) {
-    title = `${winLabel}勝`;
-    sub = '棋逢敵手，精彩對弈！';
+    title = `${winLabel}胜`;
+    sub = '棋逢敌手，精彩对弈！';
     badge = pvpLabel;
-    cardTitle = `${winLabel}勝出`;
-    cardSub = `${pvpLabel} ・ 鏖戰 ${plies} 著${pure ? ' ・ 零悔棋' : ''}`;
-    shareText = `我們在 3D 中國象棋鏖戰 ${plies} 著，${winLabel}獲勝！來對弈一局：${SITE_URL}`;
+    cardTitle = `${winLabel}胜出`;
+    cardSub = `${pvpLabel} ・ 鏖战 ${plies} 着${pure ? ' ・ 零悔棋' : ''}`;
+    shareText = `我們在 3D 中国象棋鏖战 ${plies} 着，${winLabel}獲胜！來对弈一局：${SITE_URL}`;
   } else if (playerWin) {
     title = d.winTitle;
     sub = d.winSub;
-    badge = `人機對弈 ・ ${d.label}`;
+    badge = `人机对弈 ・ ${d.label}`;
     cardTitle = d.winTitle.replace('！', '');
-    cardSub = `戰勝「${d.label}」AI ・ ${plies} 著${pure ? ' ・ 零悔棋' : ''}`;
+    cardSub = `战胜「${d.label}」AI ・ ${plies} 着${pure ? ' ・ 零悔棋' : ''}`;
     shareText = pure
-      ? `我在 3D 中國象棋全程零悔棋、${plies} 著戰勝「${d.label}」AI 🏆 不服來戰：${SITE_URL}`
-      : `我在 3D 中國象棋以 ${plies} 著戰勝「${d.label}」AI 🏆 不服來戰：${SITE_URL}`;
+      ? `我在 3D 中国象棋全程零悔棋、${plies} 着战胜「${d.label}」AI 🏆 不服來战：${SITE_URL}`
+      : `我在 3D 中国象棋以 ${plies} 着战胜「${d.label}」AI 🏆 不服來战：${SITE_URL}`;
   } else {
     title = '惜敗…';
-    sub = '勝敗乃兵家常事，捲土重來！';
-    badge = `人機對弈 ・ ${d.label}`;
+    sub = '胜敗乃兵家常事，捲土重來！';
+    badge = `人机对弈 ・ ${d.label}`;
   }
 
   lastResult = { pvp, playerWin, draw, d, plies, secs, caps, undoCount, pure, reasonChars, cardTitle, cardSub, shareText };
@@ -1385,9 +1385,9 @@ function showGameOver(endReason) {
   stUndo.classList.toggle('pure', pure);
   ovReason.textContent = draw
     ? `${endReason}，判和`
-    : endReason === '長將'
-      ? (celebrate ? '對方「長將」判負' : '「長將」判負')
-      : (celebrate ? `以「${reasonChars}」取勝` : `遭「${reasonChars}」落敗`);
+    : endReason === '长将'
+      ? (celebrate ? '对方「长将」判负' : '「长将」判负')
+      : (celebrate ? `以「${reasonChars}」取胜` : `遭「${reasonChars}」落敗`);
   ovCard.classList.toggle('win', celebrate);
   ovCard.classList.toggle('lose', !celebrate && !draw);
   btnShare.style.display = celebrate ? '' : 'none';
@@ -1406,7 +1406,7 @@ const confettiCv = document.getElementById('confettiCv');
 const CONF_COLORS = ['#f2c14e', '#e2736a', '#e9decb', '#d9a441', '#c05345', '#9fd68f'];
 let confettiRAF = 0;
 
-// rAF 在分頁進背景時會暫停，不能靠迴圈自己收尾；關閉 overlay 時須主動停止並清空
+// rAF 在分页进背景时会暫停，不能靠迴圈自己收尾；关闭 overlay 时須主动停止并清空
 function stopConfetti() {
   cancelAnimationFrame(confettiRAF);
   confettiCv.getContext('2d').clearRect(0, 0, confettiCv.width, confettiCv.height);
@@ -1419,7 +1419,7 @@ function startConfetti() {
   const g = confettiCv.getContext('2d');
   const spawn = (initial) => ({
     x: Math.random() * w,
-    y: initial ? Math.random() * h * 2 - h : -20 * dpr, // 開場一半灑在畫面內、一半自上方落下
+    y: initial ? Math.random() * h * 2 - h : -20 * dpr, // 开场一半洒在画面内、一半自上方落下
     w: (5 + Math.random() * 6) * dpr,
     h: (8 + Math.random() * 9) * dpr,
     vx: (-0.6 + Math.random() * 1.2) * dpr,
@@ -1444,7 +1444,7 @@ function startConfetti() {
       g.translate(p.x, p.y);
       g.rotate(p.rot);
       g.fillStyle = p.color;
-      g.globalAlpha = 0.6 + Math.abs(Math.sin(p.sway)) * 0.4; // 翻面時明暗變化
+      g.globalAlpha = 0.6 + Math.abs(Math.sin(p.sway)) * 0.4; // 翻面时明暗變化
       g.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
       g.restore();
     }
@@ -1453,7 +1453,7 @@ function startConfetti() {
   confettiRAF = requestAnimationFrame(step);
 }
 
-// ----- 戰績卡（分享圖）-----
+// ----- 战绩卡（分享圖）-----
 function roundRectPath(g, x, y, w, h, r) {
   g.beginPath();
   g.moveTo(x + r, y);
@@ -1472,7 +1472,7 @@ async function buildShareCard(res) {
   const serif = '"Kaiti SC","STKaiti","KaiTi","Noto Serif TC",serif';
   const sans = '"PingFang TC","Microsoft JhengHei","Noto Sans TC",sans-serif';
 
-  // 底色 + 雙線描金外框
+  // 底色 + 双线描金外框
   const bg = g.createLinearGradient(0, 0, 0, H);
   bg.addColorStop(0, '#261c12');
   bg.addColorStop(1, '#120e09');
@@ -1488,7 +1488,7 @@ async function buildShareCard(res) {
   g.textAlign = 'center';
   g.fillStyle = '#9a8a74';
   g.font = `600 30px ${sans}`;
-  g.fillText('中 國 象 棋 ・ 3 D 對 弈', W / 2, 118);
+  g.fillText('中 國 象 棋 ・ 3 D 对 弈', W / 2, 118);
 
   g.fillStyle = '#f2c14e';
   g.shadowColor = 'rgba(242,193,78,0.45)';
@@ -1502,7 +1502,7 @@ async function buildShareCard(res) {
   g.font = `700 40px ${sans}`;
   g.fillText(`${starStr}${res.cardSub}`, W / 2, 306);
 
-  // 終局棋盤：WebGL 緩衝在 present 後即失效，須重繪後立即 drawImage
+  // 终局棋盘：WebGL 缓冲在 present 后即失效，須重繪后立即 drawImage
   const bx = 90, by = 344, bw = 900, bh = 656;
   g.save();
   roundRectPath(g, bx, by, bw, bh, 22);
@@ -1518,7 +1518,7 @@ async function buildShareCard(res) {
   g.lineWidth = 3;
   g.stroke();
 
-  // 紅印：將死 / 困斃
+  // 红印：将死 / 困毙
   g.save();
   g.translate(bx + bw - 92, by + bh - 92);
   g.rotate(-0.1);
@@ -1538,7 +1538,7 @@ async function buildShareCard(res) {
   g.restore();
   g.textBaseline = 'alphabetic';
 
-  // 戰績統計
+  // 战绩统计
   g.strokeStyle = 'rgba(217,164,65,0.25)';
   g.lineWidth = 1;
   g.beginPath();
@@ -1546,8 +1546,8 @@ async function buildShareCard(res) {
   g.lineTo(W - 120, 1052);
   g.stroke();
   const stats = [
-    [String(res.plies), '著法', false],
-    [fmtTime(res.secs), '用時', false],
+    [String(res.plies), '着法', false],
+    [fmtTime(res.secs), '用时', false],
     [String(res.caps), '吃子', false],
     [String(res.undoCount), '悔棋', res.pure], // 零悔棋以金色高亮
   ];
@@ -1563,7 +1563,7 @@ async function buildShareCard(res) {
 
   g.fillStyle = '#d9a441';
   g.font = `700 34px ${sans}`;
-  g.fillText('不 服 來 戰', W / 2, 1262);
+  g.fillText('不 服 來 战', W / 2, 1262);
   g.fillStyle = '#9a8a74';
   g.font = `500 28px ${sans}`;
   g.fillText('chinese-chess.gh.miniasp.com', W / 2, 1306);
@@ -1575,7 +1575,7 @@ async function shareResult() {
   if (!lastResult) return;
   btnShare.disabled = true;
   const orig = btnShare.textContent;
-  btnShare.textContent = '產生戰績圖…';
+  btnShare.textContent = '產生战绩圖…';
   try {
     const cv = await buildShareCard(lastResult);
     const blob = await new Promise((res) => cv.toBlob(res, 'image/png'));
@@ -1587,7 +1587,7 @@ async function shareResult() {
         return;
       } catch (err) {
         if (err && err.name === 'AbortError') return; // 使用者取消分享
-        // 其餘錯誤改走下載後備方案
+        // 其餘错误改走下载后备方案
       }
     }
     const a = document.createElement('a');
@@ -1597,12 +1597,12 @@ async function shareResult() {
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);
     try {
       await navigator.clipboard.writeText(lastResult.shareText);
-      toast('戰績圖已下載、炫耀文字已複製，貼上即可分享！');
+      toast('战绩圖已下载、炫耀文字已复制，贴上即可分享！');
     } catch {
-      toast('戰績圖已下載，快分享你的勝利！');
+      toast('战绩圖已下载，快分享你的胜利！');
     }
   } catch {
-    toast('產生分享圖失敗，請再試一次');
+    toast('產生分享圖失敗，请再试一次');
   } finally {
     btnShare.disabled = false;
     btnShare.textContent = orig;
@@ -1615,7 +1615,7 @@ btnLanCreate.addEventListener('click', lanCreateRoom);
 btnLanJoin.addEventListener('click', lanJoinRoom);
 btnLanLeave.addEventListener('click', () => {
   lanLeaveRoom();
-  toast('已離開房間');
+  toast('已离开房间');
   newGame();
 });
 
@@ -1624,16 +1624,16 @@ mode = modeSel.value;
 modeSel.addEventListener('change', () => {
   mode = modeSel.value;
   if (mode !== 'lan' && lanRoomCode) lanLeaveRoom();
-  newGame(); // 換對手就開新局，避免局中切換造成混亂
+  newGame(); // 换对手就开新局，避免局中切换造成混亂
 });
 document.getElementById('btnNew').addEventListener('click', newGame);
 btnUndo.addEventListener('click', undo);
 document.getElementById('btnSound').addEventListener('click', (e) => {
   muted = !muted;
-  e.currentTarget.textContent = muted ? '音效：關' : '音效：開';
+  e.currentTarget.textContent = muted ? '音效：关' : '音效：开';
   e.currentTarget.setAttribute('aria-pressed', String(!muted));
 });
-// 「⋯」更多選單（小螢幕）：開合、點外處／Esc 關閉、玩法說明開關
+// 「⋯」更多选单（小屏幕）：开合、点外处／Esc 关闭、玩法说明开关
 const hudMore = document.getElementById('hudMore');
 const btnMore = document.getElementById('btnMore');
 const btnHelp = document.getElementById('btnHelp');
@@ -1657,16 +1657,16 @@ btnHelp.addEventListener('click', () => {
 function flyTo(pos, tgt, done) {
   cancelCameraTween();
   const tgtFrom = controls.target.clone();
-  // 以「球座標」補間（繞著目標水平環繞），直線 lerp 在 180° 換邊時
-  // 相機會橫越棋盤正上方，畫面劇烈甩動、體感很差
+  // 以「球座标」補间（繞着目标水平环繞），直线 lerp 在 180° 换邊时
+  // 相机会横越棋盘正上方，画面剧烈甩动、体感很差
   const sphFrom = new THREE.Spherical().setFromVector3(camera.position.clone().sub(tgtFrom));
   const sphTo = new THREE.Spherical().setFromVector3(pos.clone().sub(tgt));
   let dTheta = sphTo.theta - sphFrom.theta;
-  // 取最短角距離；剛好半圈時固定逆時針，方向不會忽左忽右
+  // 取最短角距离；剛好半圈时固定逆时針，方向不会忽左忽右
   while (dTheta > Math.PI) dTheta -= Math.PI * 2;
   while (dTheta < -Math.PI) dTheta += Math.PI * 2;
   if (dTheta === -Math.PI) dTheta = Math.PI;
-  // 旋轉角度越大、補間越久，讓換邊時節奏依然從容
+  // 旋转角度越大、補间越久，让换邊时节奏依然从容
   const dur = 480 + (Math.abs(dTheta) / Math.PI) * 480;
   tween(dur, (k) => {
     const tgtNow = tgtFrom.clone().lerp(tgt, k);
@@ -1676,8 +1676,8 @@ function flyTo(pos, tgt, done) {
       sphFrom.theta + dTheta * k,
     );
     camera.position.setFromSpherical(sph).add(tgtNow);
-    // 補間途中需自行更新相機朝向（tick 可能正跳過 controls.update()），
-    // 否則抵達後視線方向是舊的
+    // 補间途中需自行更新相机朝向（tick 可能正跳过 controls.update()），
+    // 否则抵達后视线方向是舊的
     camera.lookAt(tgtNow);
   }, () => { saveViewPrefs(); if (done) done(); }, 0, 'camera');
 }
@@ -1685,12 +1685,12 @@ function cancelCameraTween() {
   for (let i = tweens.length - 1; i >= 0; i--) if (tweens[i].tag === 'camera') tweens.splice(i, 1);
 }
 
-// 「視角」按鈕：在多個預設機位之間循環切換
+// 「视角」按鈕：在多个预设机位之间循环切换
 const CAMERA_VIEWS = [
-  { label: '紅方', dist: 0, polar: 45, azimuth: -90, tgt: HOME_TGT },
+  { label: '红方', dist: 0, polar: 45, azimuth: -90, tgt: HOME_TGT },
   { label: '黑方', dist: 0, polar: 45, azimuth: 90, tgt: new THREE.Vector3(0, -0.1, -0.2) },
-  { label: '側面', dist: 0, polar: 55, azimuth: 0, tgt: new THREE.Vector3(0, -0.1, 0.2) },
-  { label: '俯視', dist: 0, polar: 8, azimuth: -90, tgt: new THREE.Vector3(0, 0, 0.2) },
+  { label: '侧面', dist: 0, polar: 55, azimuth: 0, tgt: new THREE.Vector3(0, -0.1, 0.2) },
+  { label: '俯视', dist: 0, polar: 8, azimuth: -90, tgt: new THREE.Vector3(0, 0, 0.2) },
 ];
 let viewIdx = 0;
 document.getElementById('btnView').addEventListener('click', () => {
@@ -1701,15 +1701,15 @@ document.getElementById('btnView').addEventListener('click', () => {
     .setFromSphericalCoords(dist, THREE.MathUtils.degToRad(v.polar), THREE.MathUtils.degToRad(v.azimuth))
     .add(v.tgt);
   flyTo(pos, v.tgt);
-  toast(`視角：${v.label}`);
+  toast(`视角：${v.label}`);
 });
 
-// 固定視角：鎖定鏡頭後拖曳／滾輪都不再改變視角（Issue #2）
+// 固定视角：锁定镜头后拖曳／滚轮都不再改變视角（Issue #2）
 let viewLocked = false;
 const btnLock = document.getElementById('btnLock');
 function syncLockUI() {
   controls.enabled = !viewLocked;
-  document.getElementById('btnLockText').textContent = viewLocked ? '固定視角：開' : '固定視角：關';
+  document.getElementById('btnLockText').textContent = viewLocked ? '固定视角：开' : '固定视角：关';
   btnLock.setAttribute('aria-pressed', String(viewLocked));
   btnLock.classList.toggle('on', viewLocked);
 }
@@ -1717,12 +1717,12 @@ btnLock.addEventListener('click', () => {
   viewLocked = !viewLocked;
   syncLockUI();
   saveViewPrefs();
-  // 以「現狀」固定：凍結當下視角與進行中的相機補間，不做歸位
+  // 以「现狀」固定：冻结当下视角与进行中的相机補间，不做歸位
   if (viewLocked) cancelCameraTween();
 });
 syncLockUI();
 
-// ---------------- 個人化：記住 3D 視角與固定視角設定（localStorage） ----------------
+// ---------------- 个人化：记住 3D 视角与固定视角设定（localStorage） ----------------
 const VIEW_PREF_KEY = 'xiangqi.viewPrefs.v1';
 let saveViewTimer = 0;
 function saveViewPrefs() {
@@ -1733,11 +1733,11 @@ function saveViewPrefs() {
       locked: viewLocked,
       viewIdx,
     }));
-  } catch { /* 無法寫入（如隱私模式）時靜默略過 */ }
+  } catch { /* 无法写入（如隐私模式）时靜默略过 */ }
 }
 function queueSaveViewPrefs() {
   clearTimeout(saveViewTimer);
-  saveViewTimer = setTimeout(saveViewPrefs, 600); // 等慣性減速大致停止再存
+  saveViewTimer = setTimeout(saveViewPrefs, 600); // 等惯性減速大致停止再存
 }
 function loadViewPrefs() {
   try {
@@ -1747,7 +1747,7 @@ function loadViewPrefs() {
     return p;
   } catch { return null; }
 }
-// 啟動時還原個人化設定
+// 启动时还原个人化设定
 const savedPrefs = loadViewPrefs();
 if (savedPrefs) {
   camera.position.fromArray(savedPrefs.pos);
@@ -1765,7 +1765,7 @@ if (savedPrefs) {
 window.addEventListener('pagehide', saveViewPrefs);
 document.getElementById('btnAgain').addEventListener('click', newGame);
 
-// 全螢幕（含 Safari webkit 前綴）
+// 全屏幕（含 Safari webkit 前綴）
 const btnFull = document.getElementById('btnFull');
 const fsElement = () => document.fullscreenElement || document.webkitFullscreenElement || null;
 btnFull.addEventListener('click', async () => {
@@ -1777,12 +1777,12 @@ btnFull.addEventListener('click', async () => {
       await (root.requestFullscreen?.() ?? root.webkitRequestFullscreen?.());
     }
   } catch {
-    /* 使用者拒絕或瀏覽器不支援時忽略 */
+    /* 使用者拒絕或浏览器不支持时忽略 */
   }
 });
 function syncFullBtn() {
   const on = !!fsElement();
-  btnFull.textContent = on ? '離開全螢幕' : '全螢幕';
+  btnFull.textContent = on ? '离开全屏幕' : '全屏幕';
   btnFull.setAttribute('aria-pressed', String(on));
 }
 document.addEventListener('fullscreenchange', syncFullBtn);
@@ -1796,7 +1796,7 @@ function resize() {
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
   renderer.setSize(w, h);
-  // 窄螢幕（尤其手機直拿）需要更遠的鏡頭距離才能完整看到棋盤
+  // 窄屏幕（尤其手机直拿）需要更远的镜头距离才能完整看到棋盘
   if (!cameraUserAdjusted) fitCameraToBoard();
 }
 new ResizeObserver(resize).observe(container);
@@ -1808,7 +1808,7 @@ function tick(now) {
     const s = 1 + Math.sin(now * 0.006) * 0.05;
     selRing.scale.set(s, s, 1);
   }
-  if (!viewLocked) controls.update(); // 鎖定時不套用控制器更新，慣性晃動一併凍結
+  if (!viewLocked) controls.update(); // 锁定时不套用控制器更新，惯性晃动一并冻结
   renderer.render(scene, camera);
 }
 renderer.setAnimationLoop(tick);

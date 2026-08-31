@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>中國象棋 · Three.js 3D</title>
+<title>中国象棋 · Three.js 3D</title>
 
 <!-- SEO -->
-<meta name="description" content="用 Three.js 打造的 3D 互動中國象棋，支援人機對弈（AI 分簡單、中等、困難三級）與雙人對戰。完整規則引擎：將軍、將死、困斃、長將判負、三次重複局面判和、蹩馬腿、塞象眼、炮翻山、白臉將，並以傳統棋譜記法記錄著法。免費線上遊玩，無需安裝。">
+<meta name="description" content="用 Three.js 打造的 3D 互动中国象棋，支持人机对弈（AI 分简单、中等、困难三级）与双人对战。完整规则引擎：将军、将死、困毙、长将判负、三次重复局面判和、蹩马腿、塞象眼、炮翻山、白脸将，并以传统棋谱记法记录着法。免费线上游玩，无需安装。">
 <meta name="author" content="Will 保哥">
 <meta name="theme-color" content="#171310">
 <link rel="icon" href="./favicon.ico" sizes="16x16 32x32 48x48">
@@ -15,21 +15,21 @@
 
 <!-- Open Graph -->
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="中國象棋 · Three.js 3D">
-<meta property="og:title" content="中國象棋 · Three.js 3D">
-<meta property="og:description" content="用 Three.js 打造的 3D 互動中國象棋，支援人機對弈（三級 AI 難度）與雙人對戰。完整規則引擎與傳統棋譜記法，免費線上遊玩。">
+<meta property="og:site_name" content="中国象棋 · Three.js 3D">
+<meta property="og:title" content="中国象棋 · Three.js 3D">
+<meta property="og:description" content="用 Three.js 打造的 3D 互动中国象棋，支持人机对弈（三级 AI 难度）与双人对战。完整规则引擎与传统棋谱记法，免费线上游玩。">
 <meta property="og:url" content="https://chinese-chess.gh.miniasp.com/">
-<meta property="og:locale" content="zh_TW">
+<meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://chinese-chess.gh.miniasp.com/og-image.jpg?v=20260826">
 <meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="3D 中國象棋開局棋盤，紅黑雙方棋子擺放於木紋棋盤上">
+<meta property="og:image:alt" content="3D 中国象棋开局棋盘，红黑双方棋子摆放于木纹棋盘上">
 
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="中國象棋 · Three.js 3D">
-<meta name="twitter:description" content="用 Three.js 打造的 3D 互動中國象棋，支援人機對弈（三級 AI 難度）與雙人對戰。完整規則引擎與傳統棋譜記法，免費線上遊玩。">
+<meta name="twitter:title" content="中国象棋 · Three.js 3D">
+<meta name="twitter:description" content="用 Three.js 打造的 3D 互动中国象棋，支持人机对弈（三级 AI 难度）与双人对战。完整规则引擎与传统棋谱记法，免费线上游玩。">
 <meta name="twitter:image" content="https://chinese-chess.gh.miniasp.com/og-image.jpg?v=20260826">
 
 <!-- JSON-LD -->
@@ -37,13 +37,13 @@
 {
   "@context": "https://schema.org",
   "@type": "VideoGame",
-  "name": "中國象棋 · Three.js 3D",
+  "name": "中国象棋 · Three.js 3D",
   "alternateName": "Chinese Chess (Xiangqi) 3D",
-  "description": "用 Three.js 打造的 3D 互動中國象棋，支援人機對弈（AI 分簡單、中等、困難三級）與雙人對戰。完整規則引擎：將軍、將死、困斃、長將判負、三次重複局面判和、蹩馬腿、塞象眼、炮翻山、白臉將，並以傳統棋譜記法記錄著法。",
+  "description": "用 Three.js 打造的 3D 互动中国象棋，支持人机对弈（AI 分简单、中等、困难三级）与双人对战。完整规则引擎：将军、将死、困毙、长将判负、三次重复局面判和、蹩马腿、塞象眼、炮翻山、白脸将，并以传统棋谱记法记录着法。",
   "url": "https://chinese-chess.gh.miniasp.com/",
   "image": "https://chinese-chess.gh.miniasp.com/og-image.jpg?v=20260826",
   "inLanguage": "zh-Hant",
-  "genre": ["棋類遊戲", "策略遊戲"],
+  "genre": ["棋类游戏", "策略游戏"],
   "gamePlatform": "Web Browser",
   "playMode": ["SinglePlayer", "MultiPlayer"],
   "numberOfPlayers": {
@@ -68,7 +68,7 @@
   "sameAs": ["https://github.com/doggy8088/chinese-chess"]
 }
 </script>
-<link rel="stylesheet" href="./css/style.css?v=c1d8430295">
+<link rel="stylesheet" href="./css/style.css?v=5f991754c5">
 <script type="importmap">
 {
   "imports": {
@@ -82,31 +82,31 @@
 <div id="app">
   <header>
     <div class="brand">
-      <h1>中國象棋</h1>
-      <span class="sub">THREE.JS · 3D 互動棋盤 · 人機對弈 / 雙人對戰</span>
+      <h1>中国象棋</h1>
+      <span class="sub">THREE.JS · 3D 互动棋盘 · 人机对弈 / 双人对战</span>
     </div>
     <div id="hud">
-      <select id="modeSel" aria-label="對弈模式" title="選擇對弈模式">
-        <option value="easy">人機・簡單</option>
-        <option value="medium" selected>人機・中等</option>
-        <option value="hard">人機・困難</option>
-        <option value="pvp">雙人對弈</option>
-        <option value="blind">盲棋・雙人</option>
-        <option value="blindai">人機・盲棋</option>
-        <option value="lan">聯機・盲棋</option>
+      <select id="modeSel" aria-label="对弈模式" title="选择对弈模式">
+        <option value="easy">人机・简单</option>
+        <option value="medium">人机・中等</option>
+        <option value="hard">人机・困难</option>
+        <option value="pvp">双人对弈</option>
+        <option value="blind">盲棋・双人</option>
+        <option value="blindai">人机・盲棋</option>
+        <option value="lan" selected>联机・盲棋</option>
       </select>
       <button id="btnUndo" type="button">悔棋</button>
-      <button id="btnNew" type="button"><span class="t-full">新對局</span><span class="t-short">新局</span></button>
-      <button id="btnMore" type="button" aria-haspopup="true" aria-expanded="false" title="更多設定" aria-label="更多設定">⋯</button>
+      <button id="btnNew" type="button"><span class="t-full">新对局</span><span class="t-short">新局</span></button>
+      <button id="btnMore" type="button" aria-haspopup="true" aria-expanded="false" title="更多设定" aria-label="更多设定">⋯</button>
       <div id="hudMore">
-        <label class="seed-row">種子
-          <input id="seedInput" type="text" placeholder="留空隨機" autocomplete="off">
+        <label class="seed-row">种子
+          <input id="seedInput" type="text" placeholder="留空随机" autocomplete="off">
         </label>
-        <button id="btnHelp" type="button" aria-pressed="false">玩法說明</button>
-        <button id="btnSound" type="button" aria-pressed="true">音效：開</button>
-        <button id="btnView" type="button" title="循環切換：紅方 → 黑方 → 側面 → 俯視">視角</button>
-        <button id="btnFull" type="button" aria-pressed="false">全螢幕</button>
-        <a id="repoLink" href="https://github.com/doggy8088/chinese-chess" target="_blank" rel="noopener" title="在 GitHub 檢視原始碼">
+        <button id="btnHelp" type="button" aria-pressed="false">玩法说明</button>
+        <button id="btnSound" type="button" aria-pressed="true">音效：开</button>
+        <button id="btnView" type="button" title="循环切换：红方 → 黑方 → 侧面 → 俯视">视角</button>
+        <button id="btnFull" type="button" aria-pressed="false">全屏幕</button>
+        <a id="repoLink" href="https://github.com/doggy8088/chinese-chess" target="_blank" rel="noopener" title="在 GitHub 检视原始码">
           <svg viewBox="0 0 16 16" aria-hidden="true" width="15" height="15" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-2.92-.89-2.92-2.75 0-.53.19-1.07.5-1.48-.05-.12-.22-.62.05-1.29 0 0 .61-.19 2 .74a4.7 4.7 0 0 1 2.55 0c1.39-.94 2-.74 2-.74.27.67.1 1.17.05 1.29.31.41.5.94.5 1.48 0 1.87-1.14 2.55-2.93 2.75.29.25.55.74.55 1.5 0 1.08-.01 1.96-.01 2.23 0 .21.15.46.55.38A7.99 7.99 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
           <span>GitHub</span>
         </a>
@@ -117,7 +117,7 @@
   <main>
     <aside id="left">
       <section class="tray">
-        <h3>紅方吃子</h3>
+        <h3>红方吃子</h3>
         <div id="capRed" class="chips"></div>
       </section>
       <section class="tray">
@@ -125,25 +125,25 @@
         <div id="capBlack" class="chips"></div>
       </section>
       <section id="lanPanel" class="hidden">
-        <h3>聯機盲棋</h3>
-        <div id="lanStatus">尚未連線</div>
+        <h3>联机盲棋</h3>
+        <div id="lanStatus">尚未连线</div>
         <div id="lanJoinForm">
-          <input id="lanCode" type="text" placeholder="房間號" maxlength="4" autocomplete="off">
+          <input id="lanCode" type="text" placeholder="房间号" maxlength="4" autocomplete="off">
           <button id="btnLanJoin" type="button">加入</button>
-          <button id="btnLanCreate" type="button">建立房間</button>
+          <button id="btnLanCreate" type="button">建立房间</button>
         </div>
         <div id="lanInfo" class="hidden">
-          <div>房間：<b id="lanRoomCode"></b></div>
+          <div>房间：<b id="lanRoomCode"></b></div>
           <div>你是：<b id="lanSide"></b></div>
-          <div id="lanWaiting" class="lan-waiting">等待對方加入…</div>
+          <div id="lanWaiting" class="lan-waiting">等待对方加入…</div>
         </div>
-        <button id="btnLanLeave" type="button" class="hidden">離開房間</button>
+        <button id="btnLanLeave" type="button" class="hidden">离开房间</button>
       </section>
       <div class="help">
-        <p>上方選單可選擇 AI 難度（簡單／中等／困難）或雙人對弈，切換即開新局。</p>
-        <p>人機模式由你執紅先行，悔棋會連 AI 的回應一併退回。</p>
-        <p>點擊己方棋子選中（亮起走法提示），再點擊目標交叉點移動；落到敵子上即為吃子。</p>
-        <p>拖曳空白處旋轉視角，滾輪 / 雙指縮放；按「固定視角」會把鏡頭凍結在當下的視角，畫面就不會再晃動。</p>
+        <p>上方选单可选择 AI 难度（简单／中等／困难）或双人对弈，切换即开新局。</p>
+        <p>人机模式由你执红先行，悔棋会连 AI 的回应一并退回。</p>
+        <p>点击己方棋子选中（亮起走法提示），再点击目标交叉点移动；落到敌子上即为吃子。</p>
+        <p>拖曳空白处旋转视角，滚轮 / 双指缩放；按「固定视角」会把镜头冻结在当下的视角，画面就不会再晃动。</p>
       </div>
       <footer class="copyright">
         Copyright © 2026 <a href="https://www.facebook.com/will.fans/" target="_blank" rel="noopener">Will 保哥</a>
@@ -151,38 +151,38 @@
     </aside>
 
     <div id="stage">
-      <button id="btnLock" type="button" aria-pressed="false" title="固定視角">
+      <button id="btnLock" type="button" aria-pressed="false" title="固定视角">
         <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" x2="12" y1="17" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 16 10.76V6h1a2 2 0 0 0 0-4H7a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
-        <span class="lbl" id="btnLockText">固定視角：關</span>
+        <span class="lbl" id="btnLockText">固定视角：关</span>
       </button>
-      <div id="turn" aria-live="polite"><span id="turnDot"></span><span id="turnText">紅方先行</span></div>
+      <div id="turn" aria-live="polite"><span id="turnDot"></span><span id="turnText">红方先行</span></div>
     </div>
 
     <aside id="right">
-      <h3>棋譜</h3>
+      <h3>棋谱</h3>
       <ol id="log"></ol>
-      <p id="logEmpty">尚無著法，紅方先行。</p>
+      <p id="logEmpty">尚无着法，红方先行。</p>
     </aside>
   </main>
 
-  <div id="checkBanner" class="hidden">將 軍 ！</div>
+  <div id="checkBanner" class="hidden">将 军 ！</div>
 
   <div id="overlay" class="hidden">
     <canvas id="confettiCv" aria-hidden="true"></canvas>
     <div class="card" id="ovCard">
-      <div id="ovBadge">人機對弈 ・ 中等</div>
-      <h2 id="ovTitle">你贏了！</h2>
+      <div id="ovBadge">人机对弈 ・ 中等</div>
+      <h2 id="ovTitle">你赢了！</h2>
       <div id="ovStars" aria-hidden="true"></div>
-      <p id="ovSub">精彩對弈！</p>
+      <p id="ovSub">精彩对弈！</p>
       <div id="ovStats">
-        <div class="stat"><b id="stRounds">0</b><span>著法</span></div>
-        <div class="stat"><b id="stTime">0:00</b><span>用時</span></div>
+        <div class="stat"><b id="stRounds">0</b><span>着法</span></div>
+        <div class="stat"><b id="stTime">0:00</b><span>用时</span></div>
         <div class="stat"><b id="stCaps">0</b><span>吃子</span></div>
         <div class="stat"><b id="stUndo">0</b><span>悔棋</span></div>
       </div>
-      <p id="ovReason">以「將死」取勝</p>
+      <p id="ovReason">以「将死」取胜</p>
       <div class="ovBtns">
-        <button id="btnShare" type="button" class="primary">分享戰績 🎉</button>
+        <button id="btnShare" type="button" class="primary">分享战绩 🎉</button>
         <button id="btnAgain" type="button">再來一局</button>
       </div>
     </div>
@@ -191,6 +191,6 @@
   <div id="toast" class="hidden" role="status"></div>
 </div>
 
-<script type="module" src="./main.js?v=c1d8430295"></script>
+<script type="module" src="./main.js?v=5f991754c5"></script>
 </body>
 </html>

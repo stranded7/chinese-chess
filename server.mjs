@@ -1,11 +1,11 @@
 // ============================================================
-// 中國象棋 3D —— 區網聯機對戰伺服器（Node.js 內建模組，無需 npm 套件）
+// 中国象棋 3D —— 區网联机对战服务器（Node.js 内建模組，无需 npm 套件）
 //
-// 啟動：
+// 启动：
 //   node server.mjs
-// 然後開瀏覽器：
+// 然后开浏览器：
 //   http://localhost:8080
-// 朋友用 Radmin LAN 虛擬 IP 訪問同一網址即可。
+// 朋友用 Radmin LAN 虛擬 IP 訪問同一网址即可。
 // ============================================================
 import http from 'node:http';
 import fs from 'node:fs';
@@ -21,7 +21,7 @@ import {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 8080);
 
-// ---------------- 靜態檔案 ----------------
+// ---------------- 靜态档案 ----------------
 const MIME = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
@@ -50,7 +50,7 @@ function serveStatic(req, res) {
   });
 }
 
-// ---------------- 最小 WebSocket 實作 ----------------
+// ---------------- 最小 WebSocket 实作 ----------------
 const WS_GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 const clients = new Set();
 
@@ -124,7 +124,7 @@ function decodeFrames(buf) {
   return { frames, consumed };
 }
 
-// ---------------- 房間 ----------------
+// ---------------- 房间 ----------------
 const rooms = new Map();
 
 function randomCode() {
@@ -174,7 +174,7 @@ function createRoom(seed) {
     board: blindInitialBoard(seed),
     turn: RED,
     capturedBy: { [RED]: [], [BLACK]: [] },
-    logs: ['盲棋聯機對戰開始'],
+    logs: ['盲棋联机对战开始'],
     over: false,
     winner: null,
     endReason: null,
@@ -192,7 +192,7 @@ function handleDisconnect(client) {
   if (room.clients.size === 0) {
     rooms.delete(room.code);
   } else {
-    broadcastRoom(room, { type: 'opponentLeft', message: '對方已離開房間' });
+    broadcastRoom(room, { type: 'opponentLeft', message: '对方已离开房间' });
   }
 }
 
@@ -201,7 +201,7 @@ function handleMessage(client, data) {
   try { msg = JSON.parse(data); } catch { return; }
   switch (msg.type) {
     case 'create': {
-      if (client.room) { sendTo(client, { type: 'error', message: '你已在房間中' }); return; }
+      if (client.room) { sendTo(client, { type: 'error', message: '你已在房间中' }); return; }
       const room = createRoom(msg.seed || '');
       const side = RED;
       client.room = room;
@@ -212,15 +212,15 @@ function handleMessage(client, data) {
       break;
     }
     case 'join': {
-      if (client.room) { sendTo(client, { type: 'error', message: '你已在房間中' }); return; }
+      if (client.room) { sendTo(client, { type: 'error', message: '你已在房间中' }); return; }
       const room = rooms.get(String(msg.code || '').trim().toUpperCase());
-      if (!room) { sendTo(client, { type: 'error', message: '找不到房間' }); return; }
-      if (room.clients.size >= 2) { sendTo(client, { type: 'error', message: '房間已滿' }); return; }
+      if (!room) { sendTo(client, { type: 'error', message: '找不到房间' }); return; }
+      if (room.clients.size >= 2) { sendTo(client, { type: 'error', message: '房间已满' }); return; }
       const side = BLACK;
       client.room = room;
       client.side = side;
       room.clients.add(client);
-      for (const c of room.clients) sendTo(c, { type: 'opponentJoined', message: '對方已加入！' });
+      for (const c of room.clients) sendTo(c, { type: 'opponentJoined', message: '对方已加入！' });
       for (const c of room.clients) {
         sendTo(c, { type: 'state', ...publicState(room), yourSide: c.side });
       }
@@ -228,18 +228,18 @@ function handleMessage(client, data) {
     }
     case 'move': {
       const room = client.room;
-      if (!room) { sendTo(client, { type: 'error', message: '尚未加入房間' }); return; }
-      if (room.clients.size < 2) { sendTo(client, { type: 'error', message: '等待對方加入' }); return; }
-      if (room.over) { sendTo(client, { type: 'error', message: '本局已結束' }); return; }
-      if (client.side !== room.turn) { sendTo(client, { type: 'error', message: '還沒輪到你' }); return; }
+      if (!room) { sendTo(client, { type: 'error', message: '尚未加入房间' }); return; }
+      if (room.clients.size < 2) { sendTo(client, { type: 'error', message: '等待对方加入' }); return; }
+      if (room.over) { sendTo(client, { type: 'error', message: '本局已结束' }); return; }
+      if (client.side !== room.turn) { sendTo(client, { type: 'error', message: '还没轮到你' }); return; }
       const { from, to } = msg;
-      if (!from || !to) { sendTo(client, { type: 'error', message: '無效走法' }); return; }
+      if (!from || !to) { sendTo(client, { type: 'error', message: '无效走法' }); return; }
       const legal = blindLegalMoves(room.board, from.r, from.c)
         .some((m) => m.r === to.r && m.c === to.c);
       if (!legal) { sendTo(client, { type: 'error', message: '非法走法' }); return; }
 
       const p = room.board[from.r][from.c];
-      if (!p || p.side !== room.turn) { sendTo(client, { type: 'error', message: '不能移動該棋' }); return; }
+      if (!p || p.side !== room.turn) { sendTo(client, { type: 'error', message: '不能移动该棋' }); return; }
 
       const fromSnapshot = snapshotPiece(p);
       const capturedSnapshot = snapshotPiece(room.board[to.r][to.c]);
@@ -248,21 +248,21 @@ function handleMessage(client, data) {
       let logNota = nota;
       if (fromSnapshot.faceDown) {
         const moved = room.board[to.r][to.c];
-        logNota += `（翻開為${name(moved.side, moved.type)}）`;
+        logNota += `（翻开为${name(moved.side, moved.type)}）`;
       }
       if (captured && capturedSnapshot.faceDown) {
-        logNota += `，吃子翻開為${name(captured.side, captured.type)}`;
+        logNota += `，吃子翻开为${name(captured.side, captured.type)}`;
       }
-      room.logs.push(`${client.side === RED ? '紅方' : '黑方'} ${logNota}`);
+      room.logs.push(`${client.side === RED ? '红方' : '黑方'} ${logNota}`);
       if (captured) room.capturedBy[client.side].push(captured);
       room.turn = client.side === RED ? BLACK : RED;
 
       const checked = blindInCheck(room.board, room.turn);
-      if (checked) room.logs.push(`${room.turn === RED ? '紅方' : '黑方'}被將軍`);
+      if (checked) room.logs.push(`${room.turn === RED ? '红方' : '黑方'}被将军`);
       if (!kingPos(room.board, RED)) {
-        room.over = true; room.winner = BLACK; room.endReason = '吃掉將帥';
+        room.over = true; room.winner = BLACK; room.endReason = '吃掉将帅';
       } else if (!kingPos(room.board, BLACK)) {
-        room.over = true; room.winner = RED; room.endReason = '吃掉將帥';
+        room.over = true; room.winner = RED; room.endReason = '吃掉将帅';
       }
       for (const c of room.clients) {
         sendTo(c, { type: 'state', ...publicState(room), yourSide: c.side });
@@ -271,11 +271,11 @@ function handleMessage(client, data) {
     }
     case 'restart': {
       const room = client.room;
-      if (!room) { sendTo(client, { type: 'error', message: '尚未加入房間' }); return; }
+      if (!room) { sendTo(client, { type: 'error', message: '尚未加入房间' }); return; }
       room.board = blindInitialBoard(room.seed || '');
       room.turn = RED;
       room.capturedBy = { [RED]: [], [BLACK]: [] };
-      room.logs = ['盲棋聯機對戰重新開始'];
+      room.logs = ['盲棋联机对战重新开始'];
       room.over = false;
       room.winner = null;
       room.endReason = null;
@@ -329,6 +329,6 @@ server.on('upgrade', (req, socket) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`中國象棋聯機伺服器已啟動：http://localhost:${PORT}`);
-  console.log(`用 Radmin LAN 位址讓朋友連入同一個 port：${PORT}`);
+  console.log(`中国象棋联机服务器已启动：http://localhost:${PORT}`);
+  console.log(`用 Radmin LAN 位址让朋友连入同一个 port：${PORT}`);
 });
