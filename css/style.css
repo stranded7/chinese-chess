@@ -594,6 +594,35 @@ aside h3 {
   #lanJoinForm input { width: 100%; }
   #lanPanel button { flex: 1 1 auto; }
   #lanInfo { font-size: 12.5px; }
+  /* 手機版：對戰中把聯機面板收成頂部小狀態條，避免擋住棋盤 */
+  #lanPanel.playing {
+    position: fixed;
+    top: calc(52px + env(safe-area-inset-top));
+    right: 10px;
+    left: auto;
+    bottom: auto;
+    width: auto;
+    max-height: none;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 10px;
+    font-size: 11px;
+    z-index: 8;
+    pointer-events: auto;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  }
+  #lanPanel.playing #lanInfo {
+    flex-direction: row;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+  #lanPanel.playing #lanWaiting { display: none; }
+  #lanPanel.playing #lanStatus { display: none; }
+  #lanPanel.playing #lanJoinForm { display: none; }
+  #lanPanel.playing #btnLanLeave { width: auto; padding: 3px 8px; font-size: 11px; }
   .help { display: none; }
   .copyright { display: none; }
   /* 從「⋯ → 玩法說明」展開成浮動說明面板 */

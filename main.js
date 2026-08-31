@@ -9,7 +9,7 @@ import {
   hasAnyLegalMove, name, notation, hashBoard, repetitionVerdict, kingPos,
   blindInitialBoard, blindLegalMoves, blindApplyMove, blindInCheck,
   snapshotPiece,
-} from './game.js?v=97c18d55a5';
+} from './game.js?v=c1d8430295';
 
 // ---------------- 常數 ----------------
 const CELL = 1;
@@ -509,7 +509,7 @@ let aiMoveStart = 0;
 let aiWorker = null;
 let aiModule = null;   // Worker 不可用時的主執行緒後備
 try {
-  aiWorker = new Worker(new URL('./ai-worker.js?v=97c18d55a5', import.meta.url), { type: 'module' });
+  aiWorker = new Worker(new URL('./ai-worker.js?v=c1d8430295', import.meta.url), { type: 'module' });
   aiWorker.onmessage = (e) => onAIResult(e.data);
   aiWorker.onerror = () => {
     aiWorker = null;
@@ -541,7 +541,7 @@ function requestAIMove() {
   if (aiWorker) {
     aiWorker.postMessage(payload);
   } else {
-    (aiModule ??= import('./ai.js?v=97c18d55a5')).then(({ findBestMove }) => {
+    (aiModule ??= import('./ai.js?v=c1d8430295')).then(({ findBestMove }) => {
       setTimeout(() => {
         if (token !== aiToken) return;
         onAIResult({ token, result: findBestMove(payload.board, payload.side, payload.level, payload.recent, payload.blind) });
@@ -761,7 +761,7 @@ function updateLanPanel() {
   if (!lanPanel) return;
   const visible = isLAN();
   lanPanel.classList.toggle('hidden', !visible);
-  if (!visible) return;
+  if (!visible) { lanPanel.classList.remove('playing'); return; }
   if (!lanConnected) {
     lanStatus.textContent = '尚未連線，請建立或加入房間';
     lanJoinForm.classList.remove('hidden');
@@ -781,6 +781,7 @@ function updateLanPanel() {
     lanSideEl.textContent = lanSide === RED ? '紅方（先手）' : '黑方（後手）';
     lanWaitingEl.classList.toggle('hidden', !lanWaiting);
   }
+  if (lanPanel) lanPanel.classList.toggle('playing', !!lanRoomCode && !lanWaiting);
 }
 
 function lanConnect() {
