@@ -4,10 +4,14 @@
 // 難度：easy（淺層＋隨機）/ medium（3 層）/ hard（迭代加深至 6 層，殘局更深）
 // 加強：置換表、killer/history 排序、將軍延伸、應將靜態搜索、重複局面偵測
 // ============================================================
-import { ROWS, COLS, RED, BLACK, getMoves, legalMoves, kingsFacing, kingPos, inCheck, hashBoard } from './game.js?v=e7dfdc3c2e';
+import {
+  ROWS, COLS, RED, BLACK, getMoves, legalMoves, kingsFacing, kingPos, inCheck, hashBoard,
+  blindLegalMoves, blindApplyMove, blindInCheck, snapshotPiece,
+} from './game.js?v=59148e32a3';
 
 const INF = 1e9;
 const MATE = 100000;
+let BLIND_MODE = false;
 
 // 子力基礎分（兵 20 為一個單位基準）
 const VAL = { K: 10000, R: 200, C: 96, N: 88, B: 40, A: 40, P: 20 };
@@ -241,11 +245,12 @@ function initZobrist(b, side) {
 /** 產生某方所有伪合法著法（含飛將吃王，送將由搜索以「被吃王」懲罰） */
 function genMoves(b, side) {
   const out = [];
+  const moveGen = (r, c) => BLIND_MODE ? blindLegalMoves(b, r, c) : getMoves(b, r, c);
   for (let r = 0; r < ROWS; r++)
     for (let c = 0; c < COLS; c++) {
       const p = b[r][c];
       if (!p || p.side !== side) continue;
-      for (const m of getMoves(b, r, c)) out.push({ fr: r, fc: c, tr: m.r, tc: m.c });
+      for (const m of moveGen(r, c)) out.push({ fr: r, fc: c, tr: m.r, tc: m.c });
     }
   if (kingsFacing(b)) {
     const k = kingPos(b, side), ek = kingPos(b, other(side));
@@ -257,6 +262,14 @@ function genMoves(b, side) {
 const make = (b, m) => {
   const p = b[m.fr][m.fc];
   const cap = b[m.tr][m.tc];
+
+  if (BLIND_MODE) {
+    // 盲棋：記住快照，用盲棋吃子／翻面邏輯移動；Zobrist 在盲棋模式停用。
+    m._movedSnap = snapshotPiece(p);
+    m._capSnap = snapshotPiece(cap);
+    return blindApplyMove(b, { r: m.fr, c: m.fc }, { r: m.tr, c: m.tc });
+  }
+
   b[m.tr][m.tc] = p;
   b[m.fr][m.fc] = null;
   const pi = PIECE_IDX[p.side][p.type];
@@ -271,6 +284,15 @@ const make = (b, m) => {
   return cap;
 };
 const unmake = (b, m, cap) => {
+  if (BLIND_MODE) {
+    const p = b[m.tr][m.tc];
+    if (m._movedSnap) Object.assign(p, m._movedSnap);
+    b[m.fr][m.fc] = p;
+    b[m.tr][m.tc] = m._capSnap ? { ...m._capSnap } : null;
+    m._movedSnap = null;
+    m._capSnap = null;
+    return;
+  }
   const p = b[m.tr][m.tc];
   b[m.fr][m.fc] = p;
   b[m.tr][m.tc] = cap;
@@ -311,6 +333,7 @@ let nodes = 0;
 /** 快速判斷 side 是否被將軍（與 game.js inCheck 等價，但直接掃攻擊線，供搜索內層使用） */
 const N_STEPS = [[-2, -1, [-1, 0]], [-2, 1, [-1, 0]], [-1, 2, [0, 1]], [-1, -2, [0, -1]], [1, 2, [0, 1]], [1, -2, [0, -1]], [2, 1, [1, 0]], [2, -1, [1, 0]]];
 function inCheckFast(b, side) {
+  if (BLIND_MODE) return blindInCheck(b, side);
   const foe = other(side);
   const k = kingPos(b, side);
   if (!k) return true;
@@ -403,16 +426,18 @@ function negamax(b, side, depth, alpha, beta, ply) {
   if (depth <= 0) return quiesce(b, side, alpha, beta, ply);
 
   const key = za * 4294967296 + zb;
-  const hit = TT.get(key);
   let ttMove = null;
-  if (hit) {
-    ttMove = hit.m;
-    if (hit.d >= depth) {
-      let s = hit.s;
-      if (s > MATE - 1000) s -= ply; else if (s < -(MATE - 1000)) s += ply;
-      if (hit.f === TT_EXACT) return s;
-      if (hit.f === TT_LOWER && s >= beta) return s;
-      if (hit.f === TT_UPPER && s <= alpha) return s;
+  if (!BLIND_MODE) {
+    const hit = TT.get(key);
+    if (hit) {
+      ttMove = hit.m;
+      if (hit.d >= depth) {
+        let s = hit.s;
+        if (s > MATE - 1000) s -= ply; else if (s < -(MATE - 1000)) s += ply;
+        if (hit.f === TT_EXACT) return s;
+        if (hit.f === TT_LOWER && s >= beta) return s;
+        if (hit.f === TT_UPPER && s <= alpha) return s;
+      }
     }
   }
 
@@ -441,7 +466,7 @@ function negamax(b, side, depth, alpha, beta, ply) {
   }
   let sStore = best;
   if (sStore > MATE - 1000) sStore += ply; else if (sStore < -(MATE - 1000)) sStore -= ply;
-  TT.set(key, { d: depth, s: sStore, f: flag, m: bestM });
+  if (!BLIND_MODE) TT.set(key, { d: depth, s: sStore, f: flag, m: bestM });
   return best;
 }
 
@@ -456,21 +481,32 @@ const LEVELS = {
 /**
  * 找出 side 方的最佳著法。
  * @param {Array} recent 近期局面雜湊（hashBoard 字串），會懲罰走回原局面的著法
+ * @param {boolean} blind 盲棋模式：使用盲棋走法與翻面，AI 只看公開棋盤資訊
  * @returns {{from:{r,c}, to:{r,c}, score:number, depth:number}|null} 無合法著法時回 null
  */
-export function findBestMove(srcBoard, side, level = 'medium', recent = []) {
+export function findBestMove(srcBoard, side, level = 'medium', recent = [], blind = false) {
   const cfg = LEVELS[level] || LEVELS.medium;
-  let b = srcBoard.map((row) => row.map((p) => (p ? { type: p.type, side: p.side } : null)));
+  BLIND_MODE = !!blind;
+  try {
+  let b = srcBoard.map((row) => row.map((p) => (p ? {
+    id: p.id,
+    type: p.type,
+    side: p.side,
+    faceDown: !!p.faceDown,
+    realType: BLIND_MODE ? undefined : p.realType,
+    realSide: BLIND_MODE ? undefined : p.realSide,
+  } : null)));
 
-  // 根節點只考慮「嚴格合法」的著法（不送將、不對臉）
+  // 根節點：盲棋不濾「送將／對臉」，完全依公開有效屬性走法
   const rootMoves = [];
   for (let r = 0; r < ROWS; r++)
     for (let c = 0; c < COLS; c++) {
       const p = b[r][c];
       if (!p || p.side !== side) continue;
-      for (const m of legalMoves(b, r, c)) rootMoves.push({ fr: r, fc: c, tr: m.r, tc: m.c });
+      const moves = BLIND_MODE ? blindLegalMoves(b, r, c) : legalMoves(b, r, c);
+      for (const m of moves) rootMoves.push({ fr: r, fc: c, tr: m.r, tc: m.c });
     }
-  if (!rootMoves.length) return null;
+  if (!rootMoves.length) { BLIND_MODE = false; return null; }
 
   const fmt = (m, score, depth) => ({ from: { r: m.fr, c: m.fc }, to: { r: m.tr, c: m.tc }, score, depth });
 
@@ -497,7 +533,14 @@ export function findBestMove(srcBoard, side, level = 'medium', recent = []) {
   let scored = rootMoves.map((m) => ({ m, score: 0 }));
   let completed = 0;
   const freshBoard = () => {
-    const nb = srcBoard.map((row) => row.map((p) => (p ? { type: p.type, side: p.side } : null)));
+    const nb = srcBoard.map((row) => row.map((p) => (p ? {
+      id: p.id,
+      type: p.type,
+      side: p.side,
+      faceDown: !!p.faceDown,
+      realType: BLIND_MODE ? undefined : p.realType,
+      realSide: BLIND_MODE ? undefined : p.realSide,
+    } : null)));
     initZobrist(nb, side);
     return nb;
   };
@@ -591,4 +634,7 @@ export function findBestMove(srcBoard, side, level = 'medium', recent = []) {
   const top = scored.filter((e) => e.score === topScore);
   const pick = top[(Math.random() * top.length) | 0];
   return fmt(pick.m, pick.score, completed);
+  } finally {
+    BLIND_MODE = false;
+  }
 }

@@ -68,7 +68,7 @@
   "sameAs": ["https://github.com/doggy8088/chinese-chess"]
 }
 </script>
-<link rel="stylesheet" href="./css/style.css?v=e7dfdc3c2e">
+<link rel="stylesheet" href="./css/style.css?v=59148e32a3">
 <script type="importmap">
 {
   "imports": {
@@ -91,11 +91,17 @@
         <option value="medium" selected>人機・中等</option>
         <option value="hard">人機・困難</option>
         <option value="pvp">雙人對弈</option>
+        <option value="blind">盲棋・雙人</option>
+        <option value="blindai">人機・盲棋</option>
+        <option value="lan">聯機・盲棋</option>
       </select>
       <button id="btnUndo" type="button">悔棋</button>
       <button id="btnNew" type="button"><span class="t-full">新對局</span><span class="t-short">新局</span></button>
       <button id="btnMore" type="button" aria-haspopup="true" aria-expanded="false" title="更多設定" aria-label="更多設定">⋯</button>
       <div id="hudMore">
+        <label class="seed-row">種子
+          <input id="seedInput" type="text" placeholder="留空隨機" autocomplete="off">
+        </label>
         <button id="btnHelp" type="button" aria-pressed="false">玩法說明</button>
         <button id="btnSound" type="button" aria-pressed="true">音效：開</button>
         <button id="btnView" type="button" title="循環切換：紅方 → 黑方 → 側面 → 俯視">視角</button>
@@ -117,6 +123,21 @@
       <section class="tray">
         <h3>黑方吃子</h3>
         <div id="capBlack" class="chips"></div>
+      </section>
+      <section id="lanPanel" class="hidden">
+        <h3>聯機盲棋</h3>
+        <div id="lanStatus">尚未連線</div>
+        <div id="lanJoinForm">
+          <input id="lanCode" type="text" placeholder="房間號" maxlength="4" autocomplete="off">
+          <button id="btnLanJoin" type="button">加入</button>
+          <button id="btnLanCreate" type="button">建立房間</button>
+        </div>
+        <div id="lanInfo" class="hidden">
+          <div>房間：<b id="lanRoomCode"></b></div>
+          <div>你是：<b id="lanSide"></b></div>
+          <div id="lanWaiting" class="lan-waiting">等待對方加入…</div>
+        </div>
+        <button id="btnLanLeave" type="button" class="hidden">離開房間</button>
       </section>
       <div class="help">
         <p>上方選單可選擇 AI 難度（簡單／中等／困難）或雙人對弈，切換即開新局。</p>
@@ -170,6 +191,6 @@
   <div id="toast" class="hidden" role="status"></div>
 </div>
 
-<script type="module" src="./main.js?v=e7dfdc3c2e"></script>
+<script type="module" src="./main.js?v=59148e32a3"></script>
 </body>
 </html>

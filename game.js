@@ -34,6 +34,188 @@ export function initialBoard() {
   return b;
 }
 
+// ---------------- 盲棋（暗棋）輔助 ----------------
+
+/** 簡單字串種子 → 32-bit 整數（空字串或 undefined 代表完全隨機） */
+function seedToInt(seed) {
+  if (seed === undefined || seed === null || seed === '') return (Math.random() * 0xffffffff) >>> 0;
+  let h = 2166136261 >>> 0;
+  const s = String(seed);
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+/** 可重現的偽隨機產生器 */
+export function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return (t ^ (t >>> 14)) >>> 0;
+  };
+}
+
+/** 複製棋子資料（含盲棋隱藏欄位），用於悔棋快照 */
+export function snapshotPiece(p) {
+  if (!p) return null;
+  return {
+    id: p.id,
+    type: p.type,
+    side: p.side,
+    realType: p.realType || p.type,
+    realSide: p.realSide || p.side,
+    faceDown: !!p.faceDown,
+  };
+}
+
+/** 將暗子翻開，恢復為真實身份 */
+export function revealPiece(p) {
+  if (!p || !p.faceDown) return p;
+  if (p.realType && p.realSide) {
+    p.type = p.realType;
+    p.side = p.realSide;
+  }
+  // 若沒有 realType/realSide（公開棋盤、AI 搜尋），維持目前的有效屬性
+  p.faceDown = false;
+  return p;
+}
+
+/**
+ * 盲棋初始棋盤：
+ * - 將/帥固定原位、明置
+ * - 其餘 30 子隨機放到 30 個非將帥初始格
+ * - 所有非將帥棋子 faceDown = true
+ * - 暗子未翻開前的 type/side = 所在初始格的原始棋子屬性
+ */
+export function blindInitialBoard(seed = '') {
+  const std = initialBoard();
+  const slots = [];
+  const realPieces = [];
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const p = std[r][c];
+      if (!p) continue;
+      if (p.type === 'K') continue;
+      slots.push({ r, c, type: p.type, side: p.side });
+      realPieces.push({ realType: p.type, realSide: p.side });
+    }
+  }
+  const rand = mulberry32(seedToInt(seed));
+  for (let i = realPieces.length - 1; i > 0; i--) {
+    const j = (rand() % (i + 1)) | 0;
+    [realPieces[i], realPieces[j]] = [realPieces[j], realPieces[i]];
+  }
+  const b = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const p = std[r][c];
+      if (!p) continue;
+      if (p.type === 'K') {
+        b[r][c] = { id: 'K-' + p.side, type: 'K', side: p.side, realType: 'K', realSide: p.side, faceDown: false };
+      }
+    }
+  }
+  for (let i = 0; i < slots.length; i++) {
+    const s = slots[i];
+    const real = realPieces[i];
+    b[s.r][s.c] = {
+      id: 'p' + i,
+      type: s.type,
+      side: s.side,
+      realType: real.realType,
+      realSide: real.realSide,
+      faceDown: true,
+    };
+  }
+  return b;
+}
+
+/**
+ * 盲棋合法走法：
+ * - 完全依暗子的「有效屬性」（所在初始格原始棋子）生成
+ * - 不做「不能送將/送帥」過濾
+ * - 不做「不能白臉將」過濾（允許移動後翻開造成任何局面）
+ * - 盲棋變體：士/仕、象/相 都可以過河（不受九宮／河界限制）
+ */
+export function blindLegalMoves(b, r, c) {
+  const p = b[r][c];
+  if (!p) return [];
+  const foe = p.side === RED ? BLACK : RED;
+  const out = [];
+  const target = (nr, nc) => {
+    if (!inb(nr, nc)) return false;
+    const t = b[nr][nc];
+    if (t === null) { out.push({ r: nr, c: nc }); return true; }
+    if (t.side === foe) out.push({ r: nr, c: nc });
+    return false;
+  };
+  if (p.type === 'A') {
+    // 士：斜走一步，但不再限九宮
+    for (const [dr, dc] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+      target(r + dr, c + dc);
+    }
+    return out;
+  }
+  if (p.type === 'B') {
+    // 象：田字斜走兩步，但不再限河界
+    for (const [dr, dc] of [[2, 2], [2, -2], [-2, 2], [-2, -2]]) {
+      const nr = r + dr, nc = c + dc;
+      if (!inb(nr, nc)) continue;
+      if (b[r + dr / 2][c + dc / 2]) continue; // 塞象眼
+      target(nr, nc);
+    }
+    return out;
+  }
+  return getMoves(b, r, c);
+}
+
+/**
+ * 盲棋執行一步：
+ * - 被吃的暗子先翻開再移除
+ * - 移動的暗子在完成移動後立即翻開
+ * - 回傳被吃的子（已被翻開公開）
+ */
+export function blindApplyMove(b, from, to) {
+  const moved = b[from.r][from.c];
+  const captured = b[to.r][to.c];
+  if (captured && captured.faceDown) revealPiece(captured);
+  b[to.r][to.c] = moved;
+  b[from.r][from.c] = null;
+  if (moved && moved.faceDown) revealPiece(moved);
+  return captured;
+}
+
+/** 盲棋：某方（依有效屬性）是否還有可走子 */
+export function blindHasAnyLegalMove(b, side) {
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++) {
+      const p = b[r][c];
+      if (p && p.side === side && blindLegalMoves(b, r, c).length > 0) return true;
+    }
+  return false;
+}
+
+/** 盲棋版本被將判斷：使用盲棋走法，暗子未移動前不照將 */
+export function blindInCheck(b, side) {
+  if (kingsFacing(b)) return true;
+  const k = kingPos(b, side);
+  if (!k) return true;
+  const foe = side === RED ? BLACK : RED;
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++) {
+      const p = b[r][c];
+      if (!p || p.side !== foe || p.faceDown) continue;
+      for (const m of blindLegalMoves(b, r, c))
+        if (m.r === k.r && m.c === k.c) return true;
+    }
+  return false;
+}
+
+
 const inb = (r, c) => r >= 0 && r < ROWS && c >= 0 && c < COLS;
 
 /** 某棋子所有“伪合法”走法（含吃子，未过滤送将/对脸） */
@@ -176,7 +358,11 @@ export function hashBoard(b) {
   for (let r = 0; r < ROWS; r++)
     for (let c = 0; c < COLS; c++) {
       const p = b[r][c];
-      s += p ? p.type + (p.side === RED ? 'r' : 'b') : '.';
+      if (!p) { s += '.'; continue; }
+      s += p.type + (p.side === RED ? 'r' : 'b');
+      if (p.faceDown) {
+        s += '?' + p.realType + (p.realSide === RED ? 'r' : 'b');
+      }
     }
   return s;
 }
@@ -191,6 +377,8 @@ export function inCheck(b, side) {
     for (let c = 0; c < COLS; c++) {
       const p = b[r][c];
       if (!p || p.side !== foe) continue;
+      // 暗子未移動前不會持續照將；翻開後才具真實攻擊力
+      if (p.faceDown) continue;
       for (const m of getMoves(b, r, c))
         if (m.r === k.r && m.c === k.c) return true;
     }
