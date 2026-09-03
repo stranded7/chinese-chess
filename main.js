@@ -9,7 +9,7 @@ import {
   hasAnyLegalMove, name, notation, hashBoard, repetitionVerdict, kingPos,
   blindInitialBoard, blindLegalMoves, blindApplyMove, blindInCheck,
   snapshotPiece,
-} from './game.js?v=bd85e34480';
+} from './game.js?v=007b9a088b';
 
 // ---------------- 常数 ----------------
 const CELL = 1;
@@ -510,7 +510,7 @@ let aiMoveStart = 0;
 let aiWorker = null;
 let aiModule = null;   // Worker 不可用时的主执行緒后备
 try {
-  aiWorker = new Worker(new URL('./ai-worker.js?v=bd85e34480', import.meta.url), { type: 'module' });
+  aiWorker = new Worker(new URL('./ai-worker.js?v=007b9a088b', import.meta.url), { type: 'module' });
   aiWorker.onmessage = (e) => onAIResult(e.data);
   aiWorker.onerror = () => {
     aiWorker = null;
@@ -542,7 +542,7 @@ function requestAIMove() {
   if (aiWorker) {
     aiWorker.postMessage(payload);
   } else {
-    (aiModule ??= import('./ai.js?v=bd85e34480')).then(({ findBestMove }) => {
+    (aiModule ??= import('./ai.js?v=007b9a088b')).then(({ findBestMove }) => {
       setTimeout(() => {
         if (token !== aiToken) return;
         onAIResult({ token, result: findBestMove(payload.board, payload.side, payload.level, payload.recent, payload.blind) });
@@ -836,7 +836,7 @@ function lanSend(obj) {
 
 function lanCreateRoom() {
   const mode = isLANStd() ? 'std' : 'blind';
-  if (!lanConnected) {
+  if (!lanSocket || lanSocket.readyState !== 1) {
     lanStatus.textContent = '正在连线到联机服务器…';
     lanPendingAction = { type: 'create', seed: getSeedInput(), mode };
     lanConnect();
@@ -848,7 +848,7 @@ function lanCreateRoom() {
 function lanJoinRoom() {
   const code = (lanCodeInput.value || '').trim().toUpperCase();
   if (!code) { toast('请输入房间号'); return; }
-  if (!lanConnected) {
+  if (!lanSocket || lanSocket.readyState !== 1) {
     lanStatus.textContent = '正在连线到联机服务器…';
     lanPendingAction = { type: 'join', code };
     lanConnect();
