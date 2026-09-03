@@ -9,7 +9,7 @@ import {
   hasAnyLegalMove, name, notation, hashBoard, repetitionVerdict, kingPos,
   blindInitialBoard, blindLegalMoves, blindApplyMove, blindInCheck,
   snapshotPiece,
-} from './game.js?v=007b9a088b';
+} from './game.js?v=ba4a7bcf38';
 
 // ---------------- 常数 ----------------
 const CELL = 1;
@@ -510,7 +510,7 @@ let aiMoveStart = 0;
 let aiWorker = null;
 let aiModule = null;   // Worker 不可用时的主执行緒后备
 try {
-  aiWorker = new Worker(new URL('./ai-worker.js?v=007b9a088b', import.meta.url), { type: 'module' });
+  aiWorker = new Worker(new URL('./ai-worker.js?v=ba4a7bcf38', import.meta.url), { type: 'module' });
   aiWorker.onmessage = (e) => onAIResult(e.data);
   aiWorker.onerror = () => {
     aiWorker = null;
@@ -542,7 +542,7 @@ function requestAIMove() {
   if (aiWorker) {
     aiWorker.postMessage(payload);
   } else {
-    (aiModule ??= import('./ai.js?v=007b9a088b')).then(({ findBestMove }) => {
+    (aiModule ??= import('./ai.js?v=ba4a7bcf38')).then(({ findBestMove }) => {
       setTimeout(() => {
         if (token !== aiToken) return;
         onAIResult({ token, result: findBestMove(payload.board, payload.side, payload.level, payload.recent, payload.blind) });
@@ -952,6 +952,10 @@ function handleLanMessage(msg) {
 }
 
 function lanSendMove(from, to) {
+  if (!lanSocket || lanSocket.readyState !== 1) {
+    toast('尚未连接到服务器，请稍后重试');
+    return;
+  }
   busy = true;
   refreshHUD();
   lanSend({ type: 'move', from, to });
