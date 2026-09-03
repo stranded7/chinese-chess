@@ -68,7 +68,7 @@
   "sameAs": ["https://github.com/stranded7/chinese-chess"]
 }
 </script>
-<link rel="stylesheet" href="./css/style.css?v=5f991754c5">
+<link rel="stylesheet" href="./css/style.css?v=bd85e34480">
 <script type="importmap">
 {
   "imports": {
@@ -94,6 +94,7 @@
         <option value="blind">盲棋・双人</option>
         <option value="blindai">人机・盲棋</option>
         <option value="lan" selected>联机・盲棋</option>
+        <option value="lanstd">联机・普通象棋</option>
       </select>
       <button id="btnUndo" type="button">悔棋</button>
       <button id="btnNew" type="button"><span class="t-full">新对局</span><span class="t-short">新局</span></button>
@@ -125,7 +126,7 @@
         <div id="capBlack" class="chips"></div>
       </section>
       <section id="lanPanel" class="hidden">
-        <h3>联机盲棋</h3>
+        <h3 id="lanPanelTitle">联机盲棋</h3>
         <div id="lanStatus">尚未连线</div>
         <div id="lanJoinForm">
           <input id="lanCode" type="text" placeholder="房间号" maxlength="4" autocomplete="off">
@@ -191,6 +192,6 @@
   <div id="toast" class="hidden" role="status"></div>
 </div>
 
-<script type="module" src="./main.js?v=5f991754c5"></script>
+<script type="module" src="./main.js?v=bd85e34480"></script>
 </body>
 </html>

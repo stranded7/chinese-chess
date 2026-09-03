@@ -9,7 +9,7 @@ import {
   hasAnyLegalMove, name, notation, hashBoard, repetitionVerdict, kingPos,
   blindInitialBoard, blindLegalMoves, blindApplyMove, blindInCheck,
   snapshotPiece,
-} from './game.js?v=5f991754c5';
+} from './game.js?v=bd85e34480';
 
 // ---------------- 常数 ----------------
 const CELL = 1;
@@ -494,7 +494,8 @@ let mode = 'lan';   // 'pvp' | 'blind' | 'lan' | 'easy' | 'medium' | 'hard'
 const AI_SIDE = BLACK; // 人机模式：玩家执红，AI 执黑
 const isAI = () => mode !== 'pvp' && mode !== 'blind' && mode !== 'lan';
 const isBlind = () => mode === 'blind' || mode === 'lan' || mode === 'blindai';
-const isLAN = () => mode === 'lan';
+const isLAN = () => mode === 'lan' || mode === 'lanstd';
+const isLANStd = () => mode === 'lanstd';
 let lanSocket = null;
 let lanRoomCode = null;
 let lanSide = null;
@@ -509,7 +510,7 @@ let aiMoveStart = 0;
 let aiWorker = null;
 let aiModule = null;   // Worker 不可用时的主执行緒后备
 try {
-  aiWorker = new Worker(new URL('./ai-worker.js?v=5f991754c5', import.meta.url), { type: 'module' });
+  aiWorker = new Worker(new URL('./ai-worker.js?v=bd85e34480', import.meta.url), { type: 'module' });
   aiWorker.onmessage = (e) => onAIResult(e.data);
   aiWorker.onerror = () => {
     aiWorker = null;
@@ -541,7 +542,7 @@ function requestAIMove() {
   if (aiWorker) {
     aiWorker.postMessage(payload);
   } else {
-    (aiModule ??= import('./ai.js?v=5f991754c5')).then(({ findBestMove }) => {
+    (aiModule ??= import('./ai.js?v=bd85e34480')).then(({ findBestMove }) => {
       setTimeout(() => {
         if (token !== aiToken) return;
         onAIResult({ token, result: findBestMove(payload.board, payload.side, payload.level, payload.recent, payload.blind) });
@@ -628,7 +629,7 @@ function refreshHUD() {
   } else if (isAI()) {
     turnText.textContent = isRed ? '轮到你了' : 'AI 行棋';
   } else {
-    const prefix = isLAN() ? '联机盲棋・' : isBlind() ? '盲棋・' : '';
+    const prefix = isLANStd() ? '联机普通象棋・' : isLAN() ? '联机盲棋・' : isBlind() ? '盲棋・' : '';
     turnText.textContent = prefix + (isRed ? '红方行棋' : '黑方行棋');
   }
   const col = isRed ? '#c05345' : '#8b93a1';
@@ -773,6 +774,8 @@ function updateLanPanel() {
     lanInfo.classList.add('hidden');
     btnLanLeave.classList.add('hidden');
   } else {
+    const titleEl = document.getElementById('lanPanelTitle');
+    if (titleEl) titleEl.textContent = isLANStd() ? '联机普通象棋' : '联机盲棋';
     lanStatus.textContent = lanWaiting ? '已建立房间，等待对方加入…' : '对战进行中';
     lanJoinForm.classList.add('hidden');
     lanInfo.classList.remove('hidden');
@@ -832,13 +835,14 @@ function lanSend(obj) {
 }
 
 function lanCreateRoom() {
+  const mode = isLANStd() ? 'std' : 'blind';
   if (!lanConnected) {
     lanStatus.textContent = '正在连线到联机服务器…';
-    lanPendingAction = { type: 'create', seed: getSeedInput() };
+    lanPendingAction = { type: 'create', seed: getSeedInput(), mode };
     lanConnect();
     return;
   }
-  lanSend({ type: 'create', seed: getSeedInput() });
+  lanSend({ type: 'create', seed: getSeedInput(), mode });
 }
 
 function lanJoinRoom() {
@@ -1323,7 +1327,7 @@ function toast(msg) {
 
 function showGameOver(endReason) {
   const pvp = !isAI();
-  const pvpLabel = isLAN() ? '联机・盲棋' : isBlind() ? '盲棋・双人' : '双人对弈';
+  const pvpLabel = isLANStd() ? '联机・普通象棋' : isLAN() ? '联机・盲棋' : isBlind() ? '盲棋・双人' : '双人对弈';
   const draw = winner == null;
   const playerWin = !pvp && !draw && winner !== AI_SIDE;
   const d = pvp ? null : DIFF[mode];

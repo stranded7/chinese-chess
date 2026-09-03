@@ -20,16 +20,16 @@ export function initialBoard() {
   const b = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
   const back = ['R', 'N', 'B', 'A', 'K', 'A', 'B', 'N', 'R'];
   for (let c = 0; c < COLS; c++) {
-    b[0][c] = { type: back[c], side: RED };
-    b[9][c] = { type: back[c], side: BLACK };
+    b[0][c] = { id: 'r0c' + c, type: back[c], side: RED };
+    b[9][c] = { id: 'r9c' + c, type: back[c], side: BLACK };
   }
-  b[2][1] = { type: 'C', side: RED };
-  b[2][7] = { type: 'C', side: RED };
-  b[7][1] = { type: 'C', side: BLACK };
-  b[7][7] = { type: 'C', side: BLACK };
+  b[2][1] = { id: 'r2c1', type: 'C', side: RED };
+  b[2][7] = { id: 'r2c7', type: 'C', side: RED };
+  b[7][1] = { id: 'r7c1', type: 'C', side: BLACK };
+  b[7][7] = { id: 'r7c7', type: 'C', side: BLACK };
   for (const c of [0, 2, 4, 6, 8]) {
-    b[3][c] = { type: 'P', side: RED };
-    b[6][c] = { type: 'P', side: BLACK };
+    b[3][c] = { id: 'r3c' + c, type: 'P', side: RED };
+    b[6][c] = { id: 'r6c' + c, type: 'P', side: BLACK };
   }
   return b;
 }

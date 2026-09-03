@@ -14,6 +14,7 @@ import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
 import {
   ROWS, COLS, RED, BLACK, name,
+  initialBoard, legalMoves, applyMove, inCheck, hasAnyLegalMove,
   blindInitialBoard, blindLegalMoves, blindApplyMove, blindInCheck,
   snapshotPiece, kingPos, notation,
 } from './game.js';
@@ -166,15 +167,16 @@ function publicState(room) {
   };
 }
 
-function createRoom(seed) {
+function createRoom(seed, mode = 'blind') {
   const code = randomCode();
   const room = {
     code,
     seed: seed || '',
-    board: blindInitialBoard(seed),
+    mode,
+    board: mode === 'std' ? initialBoard() : blindInitialBoard(seed),
     turn: RED,
     capturedBy: { [RED]: [], [BLACK]: [] },
-    logs: ['盲棋联机对战开始'],
+    logs: [mode === 'std' ? '普通象棋联机对战开始' : '盲棋联机对战开始'],
     over: false,
     winner: null,
     endReason: null,
@@ -202,7 +204,7 @@ function handleMessage(client, data) {
   switch (msg.type) {
     case 'create': {
       if (client.room) { sendTo(client, { type: 'error', message: '你已在房间中' }); return; }
-      const room = createRoom(msg.seed || '');
+      const room = createRoom(msg.seed || '', msg.mode === 'std' ? 'std' : 'blind');
       const side = RED;
       client.room = room;
       client.side = side;
@@ -234,8 +236,11 @@ function handleMessage(client, data) {
       if (client.side !== room.turn) { sendTo(client, { type: 'error', message: '还没轮到你' }); return; }
       const { from, to } = msg;
       if (!from || !to) { sendTo(client, { type: 'error', message: '无效走法' }); return; }
-      const legal = blindLegalMoves(room.board, from.r, from.c)
-        .some((m) => m.r === to.r && m.c === to.c);
+
+      const isStd = room.mode === 'std';
+      const legal = isStd
+        ? legalMoves(room.board, from.r, from.c).some((m) => m.r === to.r && m.c === to.c)
+        : blindLegalMoves(room.board, from.r, from.c).some((m) => m.r === to.r && m.c === to.c);
       if (!legal) { sendTo(client, { type: 'error', message: '非法走法' }); return; }
 
       const p = room.board[from.r][from.c];
@@ -244,25 +249,37 @@ function handleMessage(client, data) {
       const fromSnapshot = snapshotPiece(p);
       const capturedSnapshot = snapshotPiece(room.board[to.r][to.c]);
       const nota = notation(room.board, from, to);
-      const captured = blindApplyMove(room.board, from, to);
+      const captured = isStd
+        ? applyMove(room.board, from, to)
+        : blindApplyMove(room.board, from, to);
+
       let logNota = nota;
-      if (fromSnapshot.faceDown) {
+      if (!isStd && fromSnapshot.faceDown) {
         const moved = room.board[to.r][to.c];
         logNota += `（翻开为${name(moved.side, moved.type)}）`;
       }
-      if (captured && capturedSnapshot.faceDown) {
+      if (!isStd && captured && capturedSnapshot.faceDown) {
         logNota += `，吃子翻开为${name(captured.side, captured.type)}`;
       }
       room.logs.push(`${client.side === RED ? '红方' : '黑方'} ${logNota}`);
       if (captured) room.capturedBy[client.side].push(captured);
       room.turn = client.side === RED ? BLACK : RED;
 
-      const checked = blindInCheck(room.board, room.turn);
+      const checked = isStd ? inCheck(room.board, room.turn) : blindInCheck(room.board, room.turn);
       if (checked) room.logs.push(`${room.turn === RED ? '红方' : '黑方'}被将军`);
-      if (!kingPos(room.board, RED)) {
-        room.over = true; room.winner = BLACK; room.endReason = '吃掉将帅';
-      } else if (!kingPos(room.board, BLACK)) {
-        room.over = true; room.winner = RED; room.endReason = '吃掉将帅';
+
+      if (isStd) {
+        if (!hasAnyLegalMove(room.board, room.turn)) {
+          room.over = true;
+          room.winner = room.turn === RED ? BLACK : RED;
+          room.endReason = checked ? '将死' : '困毙';
+        }
+      } else {
+        if (!kingPos(room.board, RED)) {
+          room.over = true; room.winner = BLACK; room.endReason = '吃掉将帅';
+        } else if (!kingPos(room.board, BLACK)) {
+          room.over = true; room.winner = RED; room.endReason = '吃掉将帅';
+        }
       }
       for (const c of room.clients) {
         sendTo(c, { type: 'state', ...publicState(room), yourSide: c.side });
@@ -272,10 +289,10 @@ function handleMessage(client, data) {
     case 'restart': {
       const room = client.room;
       if (!room) { sendTo(client, { type: 'error', message: '尚未加入房间' }); return; }
-      room.board = blindInitialBoard(room.seed || '');
+      room.board = room.mode === 'std' ? initialBoard() : blindInitialBoard(room.seed || '');
       room.turn = RED;
       room.capturedBy = { [RED]: [], [BLACK]: [] };
-      room.logs = ['盲棋联机对战重新开始'];
+      room.logs = [room.mode === 'std' ? '普通象棋联机对战重新开始' : '盲棋联机对战重新开始'];
       room.over = false;
       room.winner = null;
       room.endReason = null;
